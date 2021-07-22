@@ -46,9 +46,10 @@ void lv_test_core(void)
     lv_test_print("*******************");
 
     lv_test_obj();
-//    lv_test_style();
+    lv_test_style();
     lv_test_font_loader();
 }
+
 
 /**********************
  *   STATIC FUNCTIONS

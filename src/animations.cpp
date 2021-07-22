@@ -1,6 +1,6 @@
 #include "config.h"
 
-void animation_start()
+void animation_start(void * obj, lv_anim_exec_xcb_t func, uint16_t start, uint16_t end,uint16_t duration,lv_anim_path_cb_t path_cb = lv_anim_path_ease_out , uint16_t before = 0)
 {
     lv_anim_t a;
     lv_anim_init(&a);
@@ -9,7 +9,7 @@ void animation_start()
  *------------------*/
 
     /*Set the "animator" function*/
-    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_x);
+    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)func);
 
     /*Set the "animator" function*/
     lv_anim_set_var(&a, obj);
@@ -20,35 +20,14 @@ void animation_start()
     /*Set start and end values. E.g. 0, 150*/
     lv_anim_set_values(&a, start, end);
 
-    /* OPTIONAL SETTINGS
- *------------------*/
-
     /*Time to wait before starting the animation [ms]*/
-    lv_anim_set_delay(&a, delay);
+    lv_anim_set_delay(&a, before);
 
     /*Set path (curve). Default is linear*/
-    lv_anim_set_path(&a, lv_anim_path_ease_in);
-
-    /*Set a callback to call when animation is ready.*/
-    lv_anim_set_ready_cb(&a, ready_cb);
-
-    /*Set a callback to call when animation is started (after delay).*/
-    lv_anim_set_start_cb(&a, start_cb);
-
-    /*Play the animation backward too with this duration. Default is 0 (disabled) [ms]*/
-    lv_anim_set_playback_time(&a, wait_time);
-
-    /*Delay before playback. Default is 0 (disabled) [ms]*/
-    lv_anim_set_playback_delay(&a, wait_time);
-
-    /*Number of repetitions. Default is 1.  LV_ANIM_REPEAT_INFINIT for infinite repetition*/
-    lv_anim_set_repeat_count(&a, wait_time);
-
-    /*Delay before repeat. Default is 0 (disabled) [ms]*/
-    lv_anim_set_repeat_delay(&a, wait_time);
+    lv_anim_set_path_cb(&a, path_cb);
 
     /*true (default): apply the start vale immediately, false: apply start vale after delay when then anim. really starts. */
-    lv_anim_set_early_apply(&a, true / false);
+    lv_anim_set_early_apply(&a, false);
 
     /* START THE ANIMATION
  *------------------*/
