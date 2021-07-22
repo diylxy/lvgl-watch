@@ -3,7 +3,7 @@
  * https://github.com/adafruit/Adafruit-GFX-Library.git
  */
 #include "Arduino_SSD1331.h"
-#include "SPI.h"
+#include <SPI.h>
 
 Arduino_SSD1331::Arduino_SSD1331(
     Arduino_DataBus *bus, int8_t rst, uint8_t r, int16_t w, int16_t h,

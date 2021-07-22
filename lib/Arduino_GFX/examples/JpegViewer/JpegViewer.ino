@@ -14,7 +14,7 @@
 /*******************************************************************************
  * Start of Arduino_GFX setting
  ******************************************************************************/
-#include "SPI.h"
+#include <SPI.h>
 #include "Arduino_HWSPI.h"
 #include "Arduino_ESP32SPI.h"
 #include "Arduino_SWSPI.h"

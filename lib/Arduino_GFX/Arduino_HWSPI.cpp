@@ -2,7 +2,7 @@
  * start rewrite from:
  * https://github.com/adafruit/Adafruit-GFX-Library.git
  */
-#include "SPI.h"
+#include <SPI.h>
 #include "Arduino_DataBus.h"
 #include "Arduino_HWSPI.h"
 
