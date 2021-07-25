@@ -44,4 +44,6 @@ private:
     void motor_update();
 };
 extern Watch_HAL hal;
+extern bool lv_processing;
+#define DELAYLV() while(lv_processing)vTaskDelay(1)
 #endif

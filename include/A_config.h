@@ -23,7 +23,6 @@
 
 #define MENU_TIME_LONG 250                      //菜单按下间隔
 #include <lvgl.h>
-const extern lv_font_t lv_font_chinese_16;
 #include "gui.h"
 #include "hal.h"
 #endif

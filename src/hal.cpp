@@ -11,6 +11,7 @@ static lv_color_t buf[DISPLAY_MAX_X * 80];
 static lv_disp_drv_t disp_drv;
 static lv_indev_drv_t indev_drv;
 
+bool lv_processing = false;
 static void encoder_with_keys_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
     data->state = LV_INDEV_STATE_RELEASED;
@@ -33,7 +34,9 @@ static void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t
 
 void loop()
 {
+    lv_processing = true;
     lv_timer_handler();
+    lv_processing = false;
     vTaskDelay(5/portTICK_PERIOD_MS);
 }
 
