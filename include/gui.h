@@ -14,7 +14,11 @@ lv_obj_t *full_screen_msgbox_create(const char *icon, const char *title, const c
 void full_screen_msgbox_del(lv_obj_t *mbox);
 void full_screen_msgbox_wait_del(lv_obj_t *mbox, uint32_t auto_back = 0);
 void full_screen_msgbox(const char *icon, const char *title, const char *str, lv_color_t bg_color = lv_palette_main(LV_PALETTE_BLUE), uint32_t auto_back = 0);
-
+/**
+ * @brief 
+ * 倒计时到下一分钟0秒.注意， 本函数会加载新screen并删除原screen
+ */
+void countdown(void);
 extern const lv_font_t lv_font_chinese_16;
 extern const lv_font_t icon_64px;
 extern const lv_font_t num_32px;

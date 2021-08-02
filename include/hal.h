@@ -3,33 +3,46 @@
 #include "A_config.h"
 #include "Button2.h"
 #include "BlueDot_BMA400.h"
-#include "RTClib.h"
+#include "DS3231.h"
 #include <SPI.h>
 #include <Arduino_GFX.h>
 #include <Arduino_ESP32SPI_DMA.h>
 #include <Arduino_GC9A01.h>
-
+#include <WiFi.h>
+#include <WiFiUdp.h>
 enum enum_motor_type
 {
     MOTOR_SLEEP,
     MOTOR_RUN
 };
-
+typedef void (* loopFunc)(void);
 class Watch_HAL
 {
 public:
     void begin();
     void update();
+    void lightSleep();
     void deepSleep();
     void setBrightness(uint8_t b);
     void displayOn(void);
     void displayOff(void);
     void motorAdd(enum enum_motor_type type, uint16_t time);
+    bool beginSmartconfig();
+    bool connectWiFi();
+    void disconnectWiFi();
+    bool NTPSync();
+    loopFunc fLoop = NULL;
+    uint8_t Brightness = 60;
     Button2 btnUp, btnDown, btnEnter;
     BlueDot_BMA400 acc;
-    RTC_DS3231 rtc;
-    bool screenMutex = false;
+    DS3231 rtc;
+    WiFiUDP Udp;
+    volatile bool screenMutex = false;
     TaskHandle_t handleScreenUpdate;
+    volatile uint32_t release_time = 0;
+    uint16_t autoSleepTime = 5000;
+    volatile bool DoNotSleep = false;
+    volatile bool RTCInterrupted = false;
 private:
     struct motor_seq
     {
@@ -44,6 +57,8 @@ private:
     void motor_update();
 };
 extern Watch_HAL hal;
-extern bool lv_processing;
-#define DELAYLV() while(lv_processing)vTaskDelay(1)
+volatile extern bool lv_processing;
+volatile extern bool lv_halt;
+#define REQUESTLV() while(lv_processing)vTaskDelay(1);lv_halt=true
+#define RELEASELV() ;lv_halt = false;
 #endif

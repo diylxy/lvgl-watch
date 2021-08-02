@@ -53,7 +53,7 @@ public:
   virtual void draw24bitRGBBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h);
   virtual void drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg);
 #endif // defined(ARDUINO_ARCH_SAMD) || defined(ESP8266) || defined(ESP32)
-
+  virtual void tftInit() = 0;
 protected:
   Arduino_DataBus *_bus;
   int8_t _rst;
@@ -62,7 +62,6 @@ protected:
   uint8_t _xStart, _yStart;
   uint16_t _currentX = 0xFFFF, _currentY = 0xFFFF;
   uint16_t _currentW = 0xFFFF, _currentH = 0xFFFF;
-  virtual void tftInit() = 0;
   bool _ips;
   int8_t _override_datamode = -1;
 

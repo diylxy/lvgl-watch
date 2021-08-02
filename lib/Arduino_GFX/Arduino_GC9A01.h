@@ -62,9 +62,8 @@ public:
   virtual void invertDisplay(bool);
   virtual void displayOn();
   virtual void displayOff();
-
-protected:
   virtual void tftInit();
+protected:
 
 private:
 };

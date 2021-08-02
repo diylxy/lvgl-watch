@@ -22,7 +22,11 @@
 #define DISPLAY_MAX_Y 240
 
 #define MENU_TIME_LONG 250                      //菜单按下间隔
+#define CONFIG_NTP_ADDR "cn.ntp.org.cn"         //NTP服务器
+#define CONFIG_NTP_OFFSET 8*3600
 #include <lvgl.h>
+#include "alarm.h"
 #include "gui.h"
 #include "hal.h"
+#include "watchfaces.h"
 #endif
