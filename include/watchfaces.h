@@ -3,5 +3,5 @@
 
 
 void wf_clock_load(void);
-
+void wf_class_load(void);
 #endif

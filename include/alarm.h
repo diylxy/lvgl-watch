@@ -26,6 +26,7 @@ typedef struct
     uint8_t alarm_count;
     alarm_t alarm[200];
 } alarm_file_t;
+void alarm_format();
 void alarm_sort();
 alarm_t *alarm_add(enum alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end, bool enable);
 void alarm_del(uint8_t week, uint16_t time_start, uint16_t time_end);
@@ -35,6 +36,10 @@ alarm_t *alarm_get_next_no_curr(uint8_t week, uint16_t now);
 alarm_t *alarm_get_today(uint8_t week, uint8_t num);
 void alarm_update();
 void alarm_check();
+bool alarm_save();
+bool alarm_load();
 extern const char *class_names[];
+extern const char *week_name[];
+#define CLASS_NAMES_COUNT 11
 extern alarm_t *current_alarm;
 #endif

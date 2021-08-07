@@ -30,7 +30,14 @@ static void light_sleep_loop(void *param)
         }
         if (millis() - hal.release_time > hal.autoSleepTime)
         {
-            hal.lightSleep();
+            if (hal.canDeepSleep)
+            {
+                hal.deepSleep();
+            }
+            else
+            {
+                hal.lightSleep();
+            }
         }
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
@@ -61,6 +68,13 @@ static void task_battery_update(void *param)
 void setup()
 {
     Serial.begin(115200);
+    if (!SPIFFS.begin(true))
+    {
+        Serial.println("无法挂载SPIFFS，对于这个项目和配置文件，我也不知道为什么会这样");
+        while (1)
+            delay(10);
+    }
+
     hal.begin();
     //电池图标
     lblBattery = lv_label_create(lv_layer_top());
@@ -71,6 +85,13 @@ void setup()
 
     xTaskCreatePinnedToCore(light_sleep_loop, "LightSleeper", 2048, NULL, configMAX_PRIORITIES - 2, NULL, CONFIG_ARDUINO_RUNNING_CORE);
     xTaskCreatePinnedToCore(taskHALUpdate, "HALUpdate", 3824, NULL, configMAX_PRIORITIES - 2, NULL, !CONFIG_ARDUINO_RUNNING_CORE);
+
+    if(alarm_load())
+    {
+        alarm_format();
+    }
+    alarm_sort();
+
     if (rtc_get_reset_reason(1) == DEEPSLEEP_RESET)
     {
         alarm_check();

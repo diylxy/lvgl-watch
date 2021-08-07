@@ -14,8 +14,23 @@ const char *class_names[] =
         "信息",
         "",
 };
+const char *week_name[] =
+    {
+        "----",
+        "周一",
+        "周二",
+        "周三",
+        "周四",
+        "周五",
+        "周六",
+        "周日",
+};
 alarm_file_t alarms;
 RTC_DATA_ATTR alarm_t *current_alarm;
+void alarm_format()
+{
+    memset(&alarms, 0, sizeof(alarm_file_t));
+}
 void alarm_sort()
 {
     int i, j;
@@ -24,13 +39,14 @@ void alarm_sort()
     alarms.alarm_count = 0;
     for (i = 0; i < 200; ++i)
     {
-        if (alarms.alarm[i].type != ALARM_NONE)
+        if (alarms.alarm[i].type != ALARM_NONE && alarms.alarm[i].type != 0xff)
         {
             ++alarms.alarm_count;
             alarms.alarm[i].q = (int)alarms.alarm[i].week * 24 * 60 + (int)alarms.alarm[i].time_start;
         }
         else
         {
+            memset(&alarms.alarm[i], 0, sizeof(alarm_t));
             alarms.alarm[i].q = 0xffff;
         }
     }
@@ -50,6 +66,7 @@ void alarm_sort()
 
 alarm_t *alarm_add(enum alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end, bool enable)
 {
+    if(alarms.alarm_count >= 200)return NULL;
     alarms.alarm[alarms.alarm_count].enable = enable;
     alarms.alarm[alarms.alarm_count].type = type;
     alarms.alarm[alarms.alarm_count].subtype = subtype;
@@ -156,7 +173,7 @@ alarm_t *alarm_get_today(uint8_t week, uint8_t num)
     ++num;
     for (uint8_t i = 0; i < alarms.alarm_count; ++i)
     {
-        if (alarms.alarm[i].week == week)
+        if (alarms.alarm[i].week == week && alarms.alarm[i].type != ALARM_NONE)
         {
             --num;
             if (num == 0)
@@ -170,10 +187,10 @@ alarm_t *alarm_get_today(uint8_t week, uint8_t num)
 
 void alarm_update()
 {
-    bool h12;
     hal.rtc.checkIfAlarm(1);
-    uint16_t now_min = hal.rtc.getHour(h12, h12) * 60 + hal.rtc.getMinute();
-    if( hal.rtc.getSecond() >= 49)++now_min;
+    uint16_t now_min = hal.rtc.getHour() * 60 + hal.rtc.getMinute();
+    if (hal.rtc.getSecond() >= 49)
+        ++now_min;
     uint8_t week = hal.rtc.getDoW();
     alarm_t *a = alarm_get_next(week, now_min);
     if (a == NULL)
@@ -209,8 +226,7 @@ void alarm_update()
 
 void alarm_check()
 {
-    bool h12;
-    uint16_t now_min = hal.rtc.getHour(h12, h12) * 60 + hal.rtc.getMinute();
+    uint16_t now_min = hal.rtc.getHour() * 60 + hal.rtc.getMinute();
     if (hal.rtc.checkIfAlarm(1))
     {
         if (current_alarm == NULL)
@@ -237,4 +253,28 @@ void alarm_check()
         }
         alarm_update();
     }
+}
+
+bool alarm_save()
+{
+    File file = SPIFFS.open("/alarm.bin", FILE_WRITE);
+    if(!file){
+        Serial.println("无法打开闹钟配置文件");
+        return false;
+    }
+    file.write((uint8_t *)&alarms, sizeof(alarms));
+    file.close();
+    return true;
+}
+
+bool alarm_load()
+{
+    File file = SPIFFS.open("/alarm.bin", FILE_READ);
+    if(!file){
+        Serial.println("无法打开闹钟配置文件");
+        return false;
+    }
+    file.read((uint8_t *)&alarms, sizeof(alarms));
+    file.close();
+    return true;
 }

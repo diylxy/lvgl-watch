@@ -11,6 +11,7 @@
         "random": "cpp",
         "*.tcc": "cpp",
         "cmath": "cpp",
-        "cstdlib": "cpp"
+        "cstdlib": "cpp",
+        "algorithm": "cpp"
     }
 }

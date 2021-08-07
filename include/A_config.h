@@ -25,6 +25,10 @@
 #define CONFIG_NTP_ADDR "cn.ntp.org.cn"         //NTP服务器
 #define CONFIG_NTP_OFFSET 8*3600
 #include <lvgl.h>
+#include "FS.h"
+#include "SPIFFS.h"
+
+
 #include "alarm.h"
 #include "gui.h"
 #include "hal.h"

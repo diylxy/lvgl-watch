@@ -10,6 +10,7 @@
 #include <Arduino_GC9A01.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
+
 enum enum_motor_type
 {
     MOTOR_SLEEP,
@@ -43,6 +44,7 @@ public:
     uint16_t autoSleepTime = 5000;
     volatile bool DoNotSleep = false;
     volatile bool RTCInterrupted = false;
+    volatile bool canDeepSleep = false;
 private:
     struct motor_seq
     {

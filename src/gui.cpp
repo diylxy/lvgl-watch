@@ -145,7 +145,8 @@ int16_t menu_show(int16_t startAt)
     */
     lv_obj_scroll_to_view(lv_obj_get_child(obj_menu, selected), LV_ANIM_ON);
     RELEASELV();
-    while(hal.btnEnter.isPressedRaw())vTaskDelay(10);
+    while (hal.btnEnter.isPressedRaw())
+        vTaskDelay(10);
     while (1)
     {
         if (hal.btnUp.isPressedRaw())
@@ -393,6 +394,7 @@ void countdown(void)
     uint8_t curr_lbl = 0;
     REQUESTLV();
     lv_obj_t *scr_countdown = lv_obj_create(NULL);
+    lv_obj_t *cur_scr; //当前screen
     lv_obj_set_style_bg_color(scr_countdown, lv_palette_main(LV_PALETTE_LIGHT_BLUE), 0);
 
     lv_obj_t *bar1 = lv_bar_create(scr_countdown);
@@ -404,7 +406,7 @@ void countdown(void)
     lv_obj_set_style_anim_time(bar1, 800, 0);
     lv_obj_fade_in(bar1, 300, 200);
 
-    lv_obj_del(lv_scr_act());
+    cur_scr = lv_scr_act();
     lv_scr_load(scr_countdown);
 
     lv_obj_align(label("倒计时", 0, 0, true, 300), LV_ALIGN_CENTER, 0, 70);
@@ -416,7 +418,7 @@ void countdown(void)
     lv_obj_set_style_text_color(lbl[1], lv_color_white(), 0);
     RELEASELV();
     hal.motorAdd(MOTOR_RUN, 50);
-
+    hal.DoNotSleep = true;
     while (1)
     {
         if (hal.rtc.getSecond() != curr_sec)
@@ -425,7 +427,7 @@ void countdown(void)
             if (curr_sec == 0)
             {
                 hal.motorAdd(MOTOR_RUN, 100);
-                return;
+                break;
             }
             REQUESTLV();
             if (curr_sec > 50)
@@ -463,34 +465,198 @@ void countdown(void)
         {
             while (hal.btnEnter.isPressedRaw())
                 vTaskDelay(20 / portTICK_PERIOD_MS);
-            return;
+            break;
         }
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
+    lv_scr_load_anim(cur_scr, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, true);
+    hal.DoNotSleep = false;
 }
 
 bool msgbox_yn(const char *str)
 {
     REQUESTLV();
-    lv_obj_t *window = lv_obj_create(lv_scr_act());
+    lv_obj_t *cur_scr = lv_scr_act();
+    lv_obj_t *window = lv_obj_create(NULL);
     lv_obj_t *lbl = lv_label_create(window);
     uint8_t btnSel = 0;
     lv_obj_t *btns[2];
-    
-    lv_obj_set_width(window, 180);
-    lv_obj_set_height(window, 120);
-    lv_obj_center(window);
+
+    lv_label_set_long_mode(lbl, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(lbl, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(lbl, LV_ALIGN_CENTER, 0, -60);
+    lv_obj_set_style_text_font(lbl, &lv_font_chinese_16, 0);
+    lv_label_set_text(lbl, str);
+
     btns[0] = lv_btn_create(window);
     btns[1] = lv_btn_create(window);
     lv_obj_set_width(btns[0], 60);
     lv_obj_set_height(btns[0], 20);
     lv_obj_set_width(btns[1], 60);
     lv_obj_set_height(btns[1], 20);
-    
-    lv_obj_set_x(btns[0], 10);
-    lv_obj_set_y(btns[0], 90);
-    lv_obj_set_x(btns[1], 180-60-10);
-    lv_obj_set_y(btns[1], 90);
 
+    lv_obj_align(btns[0], LV_ALIGN_CENTER, -60, 20);
+    lv_obj_align(btns[1], LV_ALIGN_CENTER, 60, 20);
+
+    lv_obj_t *lbls[2];
+    lbls[0] = lv_label_create(btns[0]);
+    lbls[1] = lv_label_create(btns[1]);
+    lv_obj_set_style_text_font(lbls[0], &lv_font_chinese_16, 0);
+    lv_obj_set_style_text_font(lbls[1], &lv_font_chinese_16, 0);
+    lv_label_set_text(lbls[0], "取消");
+    lv_label_set_text(lbls[1], "确定");
+    lv_obj_center(lbls[0]);
+    lv_obj_center(lbls[1]);
+    lv_obj_add_state(btns[btnSel], LV_STATE_FOCUS_KEY);
+    lv_scr_load_anim(window, LV_SCR_LOAD_ANIM_FADE_ON, 200, 0, false);
     RELEASELV();
+    hal.DoNotSleep = true;
+    while (1)
+    {
+        if (hal.btnDown.isPressedRaw() || hal.btnUp.isPressedRaw())
+        {
+            REQUESTLV();
+            lv_obj_clear_state(btns[btnSel], LV_STATE_FOCUS_KEY);
+            btnSel = !btnSel;
+            lv_obj_add_state(btns[btnSel], LV_STATE_FOCUS_KEY);
+            RELEASELV();
+            vTaskDelay(300);
+        }
+        if (hal.btnEnter.isPressedRaw())
+        {
+            REQUESTLV();
+            lv_obj_add_state(btns[btnSel], LV_STATE_PRESSED);
+            RELEASELV();
+            while (hal.btnEnter.isPressedRaw())
+                vTaskDelay(20);
+            REQUESTLV();
+            lv_obj_clear_state(btns[btnSel], LV_STATE_PRESSED);
+            lv_scr_load_anim(cur_scr, LV_SCR_LOAD_ANIM_FADE_ON, 200, 0, true);
+            RELEASELV();
+            hal.DoNotSleep = false;
+            return btnSel;
+        }
+        vTaskDelay(50);
+    }
+}
+
+uint16_t msgbox_time(const char *str, uint16_t value_pre)
+{
+    lv_obj_t *spinbox = NULL;
+    volatile uint16_t spinbox_val;
+    uint8_t pos = 0;
+    while (hal.btnEnter.isPressedRaw())
+        vTaskDelay(50);
+    REQUESTLV();
+    curr_scr = lv_scr_act();
+    lv_obj_t *scr = lv_obj_create(lv_layer_top());
+    lv_obj_set_size(scr, 130, 88);
+    lv_obj_center(scr);
+    spinbox_val = value_pre/60;
+    spinbox_val *= 100;
+    spinbox_val += value_pre %60;
+    spinbox = lv_spinbox_create(scr);
+    lv_spinbox_set_range(spinbox, 0, 2359);
+    lv_spinbox_set_digit_format(spinbox, 4, 2);
+    lv_spinbox_set_value(spinbox, spinbox_val);
+    lv_spinbox_set_rollover(spinbox, true);
+    lv_spinbox_set_step(spinbox, 1000);
+    lv_obj_set_width(spinbox, 100);
+    lv_obj_set_style_text_align(spinbox, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(spinbox, LV_ALIGN_CENTER, 0, 10);
+
+    lv_obj_t *lbl = lv_label_create(scr);
+    lv_obj_set_style_text_font(lbl, &lv_font_chinese_16, 0);
+    lv_obj_set_style_text_align(lbl, LV_TEXT_ALIGN_CENTER, 0);
+    lv_label_set_text(lbl, str);
+    lv_obj_set_width(lbl, 100);
+    lv_label_set_long_mode(lbl, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_align(lbl, LV_ALIGN_CENTER, 0, -20);
+
+    lv_obj_fade_in(scr, 300, 0);
+    RELEASELV();
+    while (1)
+    {
+        if (hal.btnUp.isPressedRaw())
+        {
+            uint16_t i;
+            switch (lv_spinbox_get_step(spinbox))
+            {
+            case 1:
+                i = 1;
+                break;
+            case 10:
+                i = 10;
+                break;
+            case 100:
+                i = 60;
+                break;
+            case 1000:
+                i = 600;
+                break;
+            default:
+                i = 1;
+                break;
+            }
+            spinbox_val += i;
+            if (spinbox_val > 23 * 60 + 59)
+                spinbox_val = 0;
+            REQUESTLV();
+            lv_spinbox_set_value(spinbox, (int)(spinbox_val / 60) * 100 + spinbox_val % 60);
+            RELEASELV();
+            vTaskDelay(300);
+        }
+        if (hal.btnDown.isPressedRaw())
+        {
+            uint16_t i;
+            switch (lv_spinbox_get_step(spinbox))
+            {
+            case 1:
+                i = 1;
+                break;
+            case 10:
+                i = 10;
+                break;
+            case 100:
+                i = 60;
+                break;
+            case 1000:
+                i = 600;
+                break;
+            default:
+                i = 1;
+                break;
+            }
+            spinbox_val -= i;
+            if (spinbox_val > 23 * 60 + 59)
+                spinbox_val = 23 * 60 + 59;
+            REQUESTLV();
+            lv_spinbox_set_value(spinbox, (int)(spinbox_val / 60) * 100 + spinbox_val % 60);
+            RELEASELV();
+            vTaskDelay(300);
+        }
+        if (hal.btnEnter.isPressedRaw())
+        {
+            REQUESTLV();
+            lv_spinbox_step_next(spinbox);
+            RELEASELV();
+            ++pos;
+            if (pos == 4)
+                break;
+            while (hal.btnEnter.isPressedRaw())
+                vTaskDelay(20);
+            vTaskDelay(50);
+        }
+        vTaskDelay(50);
+    }
+    REQUESTLV();
+    lv_obj_fade_out(scr, 250, 0);
+    RELEASELV();
+    vTaskDelay(300);
+    REQUESTLV();
+    lv_obj_del(scr);
+    RELEASELV();
+    while (hal.btnEnter.isPressedRaw())
+        vTaskDelay(50);
+    return spinbox_val;
 }

@@ -6,7 +6,7 @@ void menu_create(void);
 void menu_add(const char *str);
 int16_t menu_show(int16_t startAt = 0);
 void menu_slide(int8_t direction);
-void menu_add(char *str);
+void menu_add(const char *str);
 void menu_create(void);
 void msgbox(const char *prompt, const char *msg, uint32_t auto_back = 0);
 lv_obj_t *label(const char *str, uint16_t x, uint16_t y, bool animation = false, uint16_t anim_delay = 0);
@@ -16,9 +16,22 @@ void full_screen_msgbox_wait_del(lv_obj_t *mbox, uint32_t auto_back = 0);
 void full_screen_msgbox(const char *icon, const char *title, const char *str, lv_color_t bg_color = lv_palette_main(LV_PALETTE_BLUE), uint32_t auto_back = 0);
 /**
  * @brief 
- * 倒计时到下一分钟0秒.注意， 本函数会加载新screen并删除原screen
+ * 倒计时到下一分钟0秒
  */
 void countdown(void);
+/**
+ * @brief 信息提示-选择
+ * @return true：确认，false：取消
+ */
+bool msgbox_yn(const char *str);
+/**
+ * 输入框——时间
+ * @param str 提示字符串
+ * @param value_pre 预设值，单位分钟，默认为0
+ * @return 时间，单位分钟
+ */
+uint16_t msgbox_time(const char *str, uint16_t value_pre = 0);
+
 extern const lv_font_t lv_font_chinese_16;
 extern const lv_font_t icon_64px;
 extern const lv_font_t num_32px;

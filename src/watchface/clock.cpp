@@ -12,25 +12,14 @@ static lv_obj_t *lblRemaining;
 
 static lv_obj_t *swap;
 
-static alarm_t *curr_class;
-static alarm_t *next_class;
+static alarm_t *curr_class = NULL;
+static alarm_t *next_class = NULL;
 static alarm_t *breakflag = NULL; //用于是否下课
 static uint8_t last_sec = 0;
 static RTC_DATA_ATTR uint8_t digits[6];
 static uint8_t digits_now[6];
 static uint16_t label_y[6];
 static uint32_t remaining;
-static const char *week_chinese[] =
-    {
-        "----",
-        "周一",
-        "周二",
-        "周三",
-        "周四",
-        "周五",
-        "周六",
-        "周日",
-};
 
 static void wf_clock_anim_set(lv_obj_t *label[2], uint16_t y, uint16_t delaytime)
 {
@@ -91,7 +80,6 @@ static void swap_class(uint16_t p)
 }
 static void wf_clock_loop()
 {
-    bool tmp;
     if (last_sec != hal.rtc.getSecond())
     {
         alarm_check();
@@ -102,7 +90,7 @@ static void wf_clock_loop()
         uint8_t hour;
         uint16_t p;
         last_sec = hal.rtc.getSecond();
-        hour = hal.rtc.getHour(tmp, tmp);
+        hour = hal.rtc.getHour();
         digits_now[0] = hour / 10;
         digits_now[1] = hour % 10;
         minute = hal.rtc.getMinute();
@@ -124,7 +112,7 @@ static void wf_clock_loop()
             }
         }
         REQUESTLV();
-        lv_label_set_text_fmt(lblDate, "20%02d/%02d/%02d  %s", hal.rtc.getYear(), hal.rtc.getMonth(tmp), hal.rtc.getDate(), week_chinese[week = hal.rtc.getDoW()]);
+        lv_label_set_text_fmt(lblDate, "20%02d/%02d/%02d  %s", hal.rtc.getYear(), hal.rtc.getMonth(), hal.rtc.getDate(), week_name[week = hal.rtc.getDoW()]);
         RELEASELV();
         p = hour * 60 + minute;
         if (curr_class != alarm_get_curr(week, p) || breakflag != alarm_get_next(week, p))
@@ -191,16 +179,25 @@ static void wf_clock_loop()
         lv_label_set_text_fmt(lblRemaining, "%d", remaining);
         RELEASELV();
     }
+    hal.canDeepSleep = true;
     if (hal.btnEnter.isPressedRaw())
     {
-        vTaskDelay(300);
+        hal.canDeepSleep = false;
+        vTaskDelay(100);
         if (hal.btnEnter.isPressedRaw())
         {
             menu_create();
+            menu_add(LV_SYMBOL_BELL " 课程管理");
             menu_add(LV_SYMBOL_SETTINGS " 设置");
+            menu_add(LV_SYMBOL_SETTINGS " 测试");
             switch (menu_show())
             {
             case 1:
+                hal.fLoop = NULL;
+                wf_class_load();
+                wf_clock_load();
+                return;
+            case 2:
                 menu_create();
                 menu_add(LV_SYMBOL_WIFI " WiFi Smartconfig");
                 menu_add(LV_SYMBOL_PLUS " 闹钟与时间");
@@ -232,7 +229,6 @@ static void wf_clock_loop()
                     menu_create();
                     menu_add(LV_SYMBOL_WIFI " 同步网络时间");
                     menu_add(LV_SYMBOL_EDIT " 时钟微调");
-                    menu_add(LV_SYMBOL_BELL " 课程管理");
                     switch (menu_show())
                     {
                     case 1:
@@ -257,12 +253,19 @@ static void wf_clock_loop()
                     default:
                         break;
                     }
-
                     break;
                 default:
                     break;
                 }
                 break;
+            case 3:
+                msgbox_yn("请确认");
+                msgbox_time("请输入时间", 120);
+                msgbox_time("请输入时间", 140);
+                msgbox_time("请输入时间", 140);
+                msgbox_time("请输入时间", 140);
+                msgbox_time("请输入时间", 140);
+                msgbox_time("请输入时间", 140);
             default:
                 break;
             }
@@ -273,6 +276,15 @@ static void wf_clock_loop()
 
 void wf_clock_load(void)
 {
+    uint8_t week = hal.rtc.getDoW();
+    uint16_t p = hal.rtc.getHour() * 60 + hal.rtc.getMinute();
+    breakflag = alarm_get_next(week, p);
+    curr_class = alarm_get_curr(week, p);
+    next_class = alarm_get_next_no_curr(week, p);
+    if (next_class == NULL)
+    {
+        next_class = alarm_get_next_no_curr(0, 0);
+    }
     REQUESTLV();
     if (lv_scr_act())
         lv_obj_del(lv_scr_act());
@@ -287,7 +299,6 @@ void wf_clock_load(void)
     lv_obj_align(bar1, LV_ALIGN_CENTER, 0, 4);
     lv_obj_set_style_anim_time(bar1, 500, 0);
     lv_bar_set_value(bar1, 0, LV_ANIM_OFF);
-    lv_bar_set_value(bar1, 50, LV_ANIM_ON);
 
     lblCurrentClass[0] = lv_label_create(scr_clock);
     lblNextClass[0] = lv_label_create(scr_clock);
@@ -310,7 +321,7 @@ void wf_clock_load(void)
     lblRemaining = lv_label_create(scr_clock);
     lv_obj_set_style_text_font(lblRemaining, &lv_font_chinese_16, 0);
     lv_obj_align(lblRemaining, LV_ALIGN_CENTER, 0, 24);
-    lv_label_set_text(lblRemaining, "0000");
+    lv_label_set_text(lblRemaining, "");
 
     for (uint8_t i = 0; i < 4; ++i)
     {
