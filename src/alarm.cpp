@@ -66,7 +66,8 @@ void alarm_sort()
 
 alarm_t *alarm_add(enum alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end)
 {
-    if(alarms.alarm_count >= 200)return NULL;
+    if (alarms.alarm_count >= 200)
+        return NULL;
     alarms.alarm[alarms.alarm_count].type = type;
     alarms.alarm[alarms.alarm_count].subtype = subtype;
     alarms.alarm[alarms.alarm_count].week = week;
@@ -99,6 +100,7 @@ void alarm_del(uint8_t week, uint16_t time_start, uint16_t time_end)
 //获取下个闹钟
 alarm_t *alarm_get_next(uint8_t week, uint16_t now)
 {
+    bool flagInClass = false; //用于标识正在上课，如果正在上课，但是发现一个闹钟在课程结束时间之前，则返回这个闹钟
     uint16_t q1 = (int)week * 24 * 60 + (int)now;
     alarm_t dummy = {ALARM_CLASS, 0, week, 9999, 9999, 0xffff};
     alarm_t *nearest = &dummy;
@@ -108,7 +110,12 @@ alarm_t *alarm_get_next(uint8_t week, uint16_t now)
         {
             nearest = &alarms.alarm[i];
         }
-        if (alarms.alarm[i].week == week && alarms.alarm[i].time_start <= now && alarms.alarm[i].time_end > now && alarms.alarm[i].type != ALARM_NONE)
+        if (alarms.alarm[i].week == week && alarms.alarm[i].time_start <= now && alarms.alarm[i].time_end > now && alarms.alarm[i].type == ALARM_CLASS && nearest->type == ALARM_CLASS)
+        {
+            nearest = &alarms.alarm[i];
+            flagInClass = true;
+        }
+        if (flagInClass == true && week == alarms.alarm[i].week && alarms.alarm[i].type != ALARM_CLASS && alarms.alarm->type != ALARM_NONE && alarms.alarm[i].time_start > nearest->time_start && alarms.alarm[i].time_start < nearest->time_end)
         {
             return &alarms.alarm[i];
         }
@@ -211,7 +218,6 @@ alarm_t *alarm_get_today(uint8_t week, uint8_t num)
 
 void alarm_update()
 {
-    hal.rtc.checkIfAlarm(1);
     uint16_t now_min = hal.rtc.getHour() * 60 + hal.rtc.getMinute();
     if (hal.rtc.getSecond() >= 49)
         ++now_min;
@@ -225,14 +231,26 @@ void alarm_update()
         else
         {
             hal.rtc.turnOnAlarm(1);
-            hal.rtc.setA1Time(a->week, a->time_start / 60, a->time_start % 60, 50, 0, true, false, false);
+            hal.rtc.setA1Time(a->week, a->time_start / 60, a->time_start % 60, 0, 0, true, false, false);
             current_alarm = a;
         }
     }
     else
     {
-        uint16_t t;
-        if (a->time_start > now_min)
+        uint16_t t;      //闹钟开始时间，单位分钟
+        uint8_t t1 = 50; //闹钟开始时的秒数
+        if (a->type == ALARM_USER)
+        {
+            t = a->time_start;
+            ++t;
+            t1 = 0;
+        }
+        else if (a->type == ALARM_COUNTDOWN)
+        {
+            t = a->time_start;
+            t1 = 40;
+        }
+        else if (a->time_start > now_min)
         {
             t = a->time_start;
         }
@@ -243,7 +261,7 @@ void alarm_update()
         if (t != 0)
             --t;
         hal.rtc.turnOnAlarm(1);
-        hal.rtc.setA1Time(a->week, t / 60, t % 60, 50, 0, true, false, false);
+        hal.rtc.setA1Time(a->week, t / 60, t % 60, t1, 0, true, false, false);
         current_alarm = a;
     }
 }
@@ -252,7 +270,7 @@ void alarm_update()
  */
 void alarm_check()
 {
-//TODO: 添加振动功能
+    //TODO: 添加振动功能
     uint16_t now_min = hal.rtc.getHour() * 60 + hal.rtc.getMinute();
     if (hal.rtc.checkIfAlarm(1))
     {
@@ -263,16 +281,27 @@ void alarm_check()
         {
             if (current_alarm->time_start > now_min)
             {
-                full_screen_msgbox(BIG_SYMBOL_BELL, "上课提醒", "上课铃将于10秒后响起，请做好准备", FULL_SCREEN_BG_BELL, 3000);
+                VIBRATE_SEQ();
+                full_screen_msgbox(BIG_SYMBOL_BELL, "上课提醒", "上课铃将于10秒后响起，请做好准备", lv_palette_main(LV_PALETTE_ORANGE), 3000);
             }
             else
             {
-                full_screen_msgbox(BIG_SYMBOL_INFO, "下课提醒", "下课铃将于10秒后响起，请做好准备", FULL_SCREEN_BG_INFO, 3000);
+                VIBRATE_SEQ();
+                full_screen_msgbox(BIG_SYMBOL_INFO, "下课提醒", "下课铃将于10秒后响起，请做好准备", lv_palette_main(LV_PALETTE_GREEN), 3000);
             }
         }
         else if (current_alarm->type == ALARM_USER)
         {
-            full_screen_msgbox(BIG_SYMBOL_BELL, "自定义闹钟", "", FULL_SCREEN_BG_BELL, 3000);
+            uint8_t c = 0; //振动计数器，如果一直未按下按键则自动退出
+            lv_obj_t *msg = full_screen_msgbox_create(BIG_SYMBOL_BELL, "自定义闹钟", "按下右侧两按键退出", FULL_SCREEN_BG_BELL);
+            while (!(hal.btnUp.isPressedRaw() && hal.btnDown.isPressedRaw()))
+            {
+                VIBRATE_SEQ();
+                vTaskDelay(1000);
+                c++;
+                if(c >= ALARM_AUTO_STOP)break;
+            }
+            full_screen_msgbox_del(msg);
         }
         else
         {
@@ -285,7 +314,8 @@ void alarm_check()
 bool alarm_save()
 {
     File file = SPIFFS.open("/alarm.bin", FILE_WRITE);
-    if(!file){
+    if (!file)
+    {
         Serial.println("无法打开闹钟配置文件");
         return false;
     }
@@ -297,7 +327,8 @@ bool alarm_save()
 bool alarm_load()
 {
     File file = SPIFFS.open("/alarm.bin", FILE_READ);
-    if(!file){
+    if (!file)
+    {
         Serial.println("无法打开闹钟配置文件");
         return false;
     }

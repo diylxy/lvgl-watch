@@ -1,5 +1,6 @@
 #include "A_config.h"
 
+//FIXED: 闹钟与倒计时无法触发(但是有中断)
 static lv_obj_t *scr_clock;
 
 static lv_obj_t *bar1;
@@ -188,7 +189,7 @@ static void wf_clock_loop()
             menu_create();
             menu_add(LV_SYMBOL_BELL " 课程管理");
             menu_add(LV_SYMBOL_SETTINGS " 设置");
-            menu_add(LV_SYMBOL_SETTINGS " 测试");
+            menu_add(LV_SYMBOL_SETTINGS " Debug 专用选项");
             switch (menu_show())
             {
             case 1:
@@ -199,7 +200,8 @@ static void wf_clock_loop()
             case 2:
                 menu_create();
                 menu_add(LV_SYMBOL_WIFI " WiFi Smartconfig");
-                menu_add(LV_SYMBOL_PLUS " 闹钟与时间");
+                menu_add(LV_SYMBOL_PLUS " 时间设置");
+                menu_add(LV_SYMBOL_FILE " 启动HTTP服务器");
                 switch (menu_show())
                 {
                     lv_obj_t *msgbox_full;
@@ -253,18 +255,18 @@ static void wf_clock_loop()
                         break;
                     }
                     break;
+                case 3:
+                    pushWatchFace(wf_clock_load);
+                    wf_webserver_load();
+                    return;
+                    break;
                 default:
                     break;
                 }
                 break;
             case 3:
-                msgbox_yn("请确认");
-                msgbox_time("请输入时间", 120);
-                msgbox_time("请输入时间", 140);
-                msgbox_time("请输入时间", 140);
-                msgbox_time("请输入时间", 140);
-                msgbox_time("请输入时间", 140);
-                msgbox_time("请输入时间", 140);
+                countdown();
+                break;
             default:
                 break;
             }

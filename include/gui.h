@@ -48,8 +48,8 @@ extern const lv_font_t num_64px;
 
 
 #define FULL_SCREEN_BG_INFO lv_palette_main(LV_PALETTE_BLUE)
-#define FULL_SCREEN_BG_BELL lv_palette_main(LV_PALETTE_BLUE)
-#define FULL_SCREEN_BG_LOCK lv_palette_main(LV_PALETTE_YELLOW)
+#define FULL_SCREEN_BG_BELL lv_palette_main(LV_PALETTE_YELLOW)
+#define FULL_SCREEN_BG_LOCK lv_palette_main(LV_PALETTE_ORANGE)
 #define FULL_SCREEN_BG_CROSS lv_palette_main(LV_PALETTE_RED)
 #define FULL_SCREEN_BG_CHECK lv_palette_main(LV_PALETTE_GREEN)
 #define FULL_SCREEN_BG_QUESTION lv_palette_main(LV_PALETTE_LIGHT_BLUE)

@@ -33,30 +33,29 @@ static void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t
     lv_disp_flush_ready(disp);
 }
 
-void loop()
+void loop(void)
 {
     while (lv_halt)
         ;
     lv_processing = true;
     lv_timer_handler();
     lv_processing = false;
-    vTaskDelay(2 / portTICK_PERIOD_MS);
+    vTaskDelay(2);
 }
 /**
  * 表盘更新
  */
 static void update_loop(void *param)
 {
-    while(1)
+    while (1)
     {
-        if(hal.fLoop)
+        if (hal.fLoop)
         {
             hal.fLoop();
         }
         vTaskDelay(1);
     }
 }
-
 
 static void lvgl_begin()
 {
@@ -92,8 +91,6 @@ void Watch_HAL::begin()
     btnEnter.begin(WATCH_BUTTON_ENTER, INPUT_PULLUP, false, true);
     Wire.setPins(WATCH_SDA, WATCH_SCL);
     acc.init();
-    rtc.enable32kHz(false);
-    rtc.enableOscillator(false, false, 0);
     pinMode(VIBRATE_MOTOR, OUTPUT);
     gfx->begin(80000000); /* TFT init */
     gfx->fillScreen(BLACK);
@@ -101,7 +98,7 @@ void Watch_HAL::begin()
     setBrightness(Brightness);
     lvgl_begin();
 
-    xTaskCreatePinnedToCore(update_loop, "WatchFace-Loop", 2048, NULL, configMAX_PRIORITIES - 2, NULL, CONFIG_ARDUINO_RUNNING_CORE);
+    xTaskCreatePinnedToCore(update_loop, "WatchFace-Loop", 8192, NULL, configMAX_PRIORITIES - 2, NULL, CONFIG_ARDUINO_RUNNING_CORE);
 }
 
 void Watch_HAL::update()
@@ -110,12 +107,11 @@ void Watch_HAL::update()
     btnDown.loop();
     btnEnter.loop();
     motor_update();
-    if(btnEnter.isPressedRaw() || btnUp.isPressedRaw() || btnDown.isPressedRaw())
+    if (btnEnter.isPressedRaw() || btnUp.isPressedRaw() || btnDown.isPressedRaw())
     {
         release_time = millis();
     }
 }
-
 
 void Watch_HAL::displayOff(void)
 {
@@ -143,7 +139,7 @@ void Watch_HAL::displayOn(void)
 void Watch_HAL::setBrightness(uint8_t b)
 {
     ledcWrite(1, b);
-    if(b != 0)
+    if (b != 0)
         Brightness = b;
 }
 
@@ -156,17 +152,17 @@ void Watch_HAL::lightSleep()
     setBrightness(0);
     ledcDetachPin(WATCH_TFT_LED);
     gfx->displayOff();
-    rtc_gpio_init(GPIO_NUM_0);
-    rtc_gpio_pullup_en(GPIO_NUM_0);
-    esp_sleep_enable_ext1_wakeup(1 /* BTN_0 */, ESP_EXT1_WAKEUP_ALL_LOW);
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_32, LOW); // RTC中断
+    rtc_gpio_init(GPIO_NUM_13);
+    rtc_gpio_pullup_dis(GPIO_NUM_13);
+    esp_sleep_enable_ext1_wakeup(1 << 13 /* BTN_2 */, ESP_EXT1_WAKEUP_ANY_HIGH);
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_32 /* RTC_INT */, LOW); // RTC中断
     // esp_sleep_enable_ext0_wakeup(GPIO_NUM_35 /* BMA_INT_2 / TAP */, HIGH); // step interrupts (currently)
     //esp_sleep_enable_ext0_wakeup(GPIO_NUM_34 /* BMA_INT_1 */, HIGH);  // tilt to wake and tap interrupts
     delay(100);
     Serial.println("Done!");
     esp_light_sleep_start();
     Serial.print("Waking up...");
-    rtc_gpio_deinit(GPIO_NUM_0);
+    rtc_gpio_deinit(GPIO_NUM_13);
     rtc_gpio_deinit(GPIO_NUM_32);
     digitalWrite(33, HIGH);
     delay(25);
@@ -181,11 +177,12 @@ void Watch_HAL::lightSleep()
 
     ledcAttachPin(WATCH_TFT_LED, 1);
     setBrightness(Brightness);
-    
+
     hal.release_time = millis();
     hal.screenMutex = false;
     Serial.println("Done!");
-    while (hal.btnEnter.isPressedRaw());
+    while (hal.btnEnter.isPressedRaw())
+        ;
     delay(20);
 }
 void Watch_HAL::deepSleep()
@@ -195,10 +192,10 @@ void Watch_HAL::deepSleep()
     hal.screenMutex = true;
     setBrightness(0);
     gfx->displayOff();
-    rtc_gpio_init(GPIO_NUM_0);
-    rtc_gpio_pullup_en(GPIO_NUM_0);
-    esp_sleep_enable_ext1_wakeup(1 /* BTN_0 */, ESP_EXT1_WAKEUP_ALL_LOW);
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_32 /* BMA_INT_1 */, LOW); // RTC中断
+    rtc_gpio_init(GPIO_NUM_13);
+    rtc_gpio_pullup_dis(GPIO_NUM_13);
+    esp_sleep_enable_ext1_wakeup(1 << 13 /* BTN_2 */, ESP_EXT1_WAKEUP_ANY_HIGH);
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_32 /* RTC_INT */, LOW); // RTC中断
     // esp_sleep_enable_ext0_wakeup(GPIO_NUM_35 /* BMA_INT_2 / TAP */, HIGH); // step interrupts (currently)
     //esp_sleep_enable_ext0_wakeup(GPIO_NUM_34 /* BMA_INT_1 */, HIGH);  // tilt to wake and tap interrupts
     delay(100);
@@ -257,31 +254,33 @@ bool Watch_HAL::beginSmartconfig()
     WiFi.mode(WIFI_AP_STA);
     WiFi.beginSmartConfig();
 
-    while (!WiFi.smartConfigDone()) {
-      vTaskDelay(500/portTICK_PERIOD_MS);
-      ++tries;
-      if(tries >= 120)
-      {
-          return false;
-      }
-      if(btnEnter.isPressedRaw())
-      {
-          return false;
-      }
+    while (!WiFi.smartConfigDone())
+    {
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+        ++tries;
+        if (tries >= 120)
+        {
+            return false;
+        }
+        if (btnEnter.isPressedRaw())
+        {
+            return false;
+        }
     }
     tries = 0;
     WiFi.mode(WIFI_STA);
-    while (WiFi.status() != WL_CONNECTED) {
-      vTaskDelay(500/portTICK_PERIOD_MS);
-      ++tries;
-      if(tries >= 60)
-      {
-          return false;
-      }
-      if(btnEnter.isPressedRaw())
-      {
-          return false;
-      }
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+        ++tries;
+        if (tries >= 60)
+        {
+            return false;
+        }
+        if (btnEnter.isPressedRaw())
+        {
+            return false;
+        }
     }
     return true;
 }
@@ -291,19 +290,21 @@ bool Watch_HAL::connectWiFi()
     uint8_t tries = 0;
     WiFi.mode(WIFI_STA);
     WiFi.begin();
-    while (WiFi.status() != WL_CONNECTED) {
-      vTaskDelay(500);
-      ++tries;
-      if(tries > 60)
-      {
-          WiFi.mode(WIFI_OFF);
-          return false;
-      }
-      if(hal.btnEnter.isPressedRaw())
-      {
-          WiFi.mode(WIFI_OFF);
-          return false;
-      }
+    if(WiFi.SSID() == "")return false;
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        vTaskDelay(500);
+        ++tries;
+        if (tries > 60)
+        {
+            WiFi.mode(WIFI_OFF);
+            return false;
+        }
+        if (hal.btnEnter.isPressedRaw())
+        {
+            WiFi.mode(WIFI_OFF);
+            return false;
+        }
     }
     return true;
 }
@@ -315,78 +316,81 @@ void Watch_HAL::disconnectWiFi()
 
 /*-------- NTP ----------*/
 
-static const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
+static const int NTP_PACKET_SIZE = 48;        // NTP time is in the first 48 bytes of message
 static byte NTPpacketBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
 
 // send an NTP request to the time server at the given address
 void sendNTPpacket(IPAddress &address)
 {
-  // set all bytes in the buffer to 0
-  memset(NTPpacketBuffer, 0, NTP_PACKET_SIZE);
-  // Initialize values needed to form NTP request
-  // (see URL above for details on the packets)
-  NTPpacketBuffer[0] = 0b11100011;   // LI, Version, Mode
-  NTPpacketBuffer[1] = 0;     // Stratum, or type of clock
-  NTPpacketBuffer[2] = 6;     // Polling Interval
-  NTPpacketBuffer[3] = 0xEC;  // Peer Clock Precision
-  // 8 bytes of zero for Root Delay & Root Dispersion
-  NTPpacketBuffer[12] = 49;
-  NTPpacketBuffer[13] = 0x4E;
-  NTPpacketBuffer[14] = 49;
-  NTPpacketBuffer[15] = 52;
-  // all NTP fields have been given values, now
-  // you can send a packet requesting a timestamp:
-  hal.Udp.beginPacket(address, 123); //NTP requests are to port 123
-  hal.Udp.write(NTPpacketBuffer, NTP_PACKET_SIZE);
-  hal.Udp.endPacket();
+    // set all bytes in the buffer to 0
+    memset(NTPpacketBuffer, 0, NTP_PACKET_SIZE);
+    // Initialize values needed to form NTP request
+    // (see URL above for details on the packets)
+    NTPpacketBuffer[0] = 0b11100011; // LI, Version, Mode
+    NTPpacketBuffer[1] = 0;          // Stratum, or type of clock
+    NTPpacketBuffer[2] = 6;          // Polling Interval
+    NTPpacketBuffer[3] = 0xEC;       // Peer Clock Precision
+    // 8 bytes of zero for Root Delay & Root Dispersion
+    NTPpacketBuffer[12] = 49;
+    NTPpacketBuffer[13] = 0x4E;
+    NTPpacketBuffer[14] = 49;
+    NTPpacketBuffer[15] = 52;
+    // all NTP fields have been given values, now
+    // you can send a packet requesting a timestamp:
+    hal.Udp.beginPacket(address, 123); //NTP requests are to port 123
+    hal.Udp.write(NTPpacketBuffer, NTP_PACKET_SIZE);
+    hal.Udp.endPacket();
 }
 time_t getNtpTime()
 {
-  IPAddress ntpServerIP;
-  while (hal.Udp.parsePacket() > 0);
-  WiFi.hostByName(CONFIG_NTP_ADDR, ntpServerIP);
-  sendNTPpacket(ntpServerIP);
-  uint32_t beginWait = millis();
-  while (millis() - beginWait < 1500) {
-    int size = hal.Udp.parsePacket();
-    if (size >= NTP_PACKET_SIZE) {
-      hal.Udp.read(NTPpacketBuffer, NTP_PACKET_SIZE);
-      unsigned long secsSince1900;
-      secsSince1900 =  (unsigned long)NTPpacketBuffer[40] << 24;
-      secsSince1900 |= (unsigned long)NTPpacketBuffer[41] << 16;
-      secsSince1900 |= (unsigned long)NTPpacketBuffer[42] << 8;
-      secsSince1900 |= (unsigned long)NTPpacketBuffer[43];
-      return secsSince1900 - 2208988800UL;
+    IPAddress ntpServerIP;
+    while (hal.Udp.parsePacket() > 0)
+        ;
+    WiFi.hostByName(CONFIG_NTP_ADDR, ntpServerIP);
+    sendNTPpacket(ntpServerIP);
+    uint32_t beginWait = millis();
+    while (millis() - beginWait < 1500)
+    {
+        int size = hal.Udp.parsePacket();
+        if (size >= NTP_PACKET_SIZE)
+        {
+            hal.Udp.read(NTPpacketBuffer, NTP_PACKET_SIZE);
+            unsigned long secsSince1900;
+            secsSince1900 = (unsigned long)NTPpacketBuffer[40] << 24;
+            secsSince1900 |= (unsigned long)NTPpacketBuffer[41] << 16;
+            secsSince1900 |= (unsigned long)NTPpacketBuffer[42] << 8;
+            secsSince1900 |= (unsigned long)NTPpacketBuffer[43];
+            return secsSince1900 - 2208988800UL;
+        }
     }
-  }
-  return 0; // return 0 if unable to get the time
+    return 0; // return 0 if unable to get the time
 }
-
 
 bool Watch_HAL::NTPSync()
 {
-    if(hal.connectWiFi() == false)
+    if (hal.connectWiFi() == false)
     {
         return false;
     }
     vTaskDelay(100);
     hal.Udp.begin(8888);
     time_t tm_now = getNtpTime();
-    if(tm_now != 0)
+    if (tm_now != 0)
     {
-        DateTime dt(tm_now+CONFIG_NTP_OFFSET);
-        hal.rtc.setYear(dt.year()-2000);
+        DateTime dt(tm_now + CONFIG_NTP_OFFSET);
+        hal.rtc.setYear(dt.year() - 2000);
         hal.rtc.setMonth(dt.month());
         hal.rtc.setDate(dt.day());
         tm_now /= 86400;
-        uint8_t week = (tm_now+4)%7;
-        hal.rtc.setDoW(week?week:7);
+        uint8_t week = (tm_now + 4) % 7;
+        hal.rtc.setDoW(week ? week : 7);
         hal.rtc.setHour(dt.hour());
         hal.rtc.setMinute(dt.minute());
         hal.rtc.setSecond(dt.second());
     }
     hal.Udp.stop();
     WiFi.mode(WIFI_OFF);
-    if(tm_now == 0)return false;
+    if (tm_now == 0)
+        return false;
     return true;
 }

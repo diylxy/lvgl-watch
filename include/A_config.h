@@ -24,6 +24,16 @@
 #define MENU_TIME_LONG 250                      //菜单按下间隔
 #define CONFIG_NTP_ADDR "cn.ntp.org.cn"         //NTP服务器
 #define CONFIG_NTP_OFFSET 8*3600
+
+//振动效果定义
+#define VIBRATE_SEQ() hal.motorAdd(MOTOR_RUN, 20);hal.motorAdd(MOTOR_SLEEP, 200);hal.motorAdd(MOTOR_RUN, 20);hal.motorAdd(MOTOR_SLEEP, 500)
+#define ALARM_AUTO_STOP 30              //如果闹钟执行VIBRATE_SEQ次数达到此数时自动退出
+
+//WiFi AP 密码设置
+//注意是AP密码，即手表作为WiFi AP开启Webserver时有效
+#define WIFI_AP_PASSWORD "12345678"
+
+//头文件
 #include <lvgl.h>
 #include "FS.h"
 #include "SPIFFS.h"

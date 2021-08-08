@@ -1,12 +1,12 @@
 #include "A_config.h"
 //FIXED: 闹钟或倒计时如果是当前闹钟会显示为两个，修改第二个闹钟就会重启，但是课程没问题，疑似LoadProhibited，如果把这个闹钟改为class就会无限重启
-//FIXME: 删除课程后光标按钮消失
-//FIXME: 闹钟与倒计时无法触发(但是有中断)
+//FIXED: 删除课程后光标按钮消失
 static lv_obj_t *scr_class;
 static lv_obj_t *timetable;
 static uint8_t selected = 0;
 static uint8_t total = 0;
 static uint8_t curr_week = 1;
+static bool modified = false;     //课程是否添加/修改/删除标记
 static alarm_t *class_p[50];      //指向课程的指针
 static bool week_changed = false; //星期已修改标志，需要在主循环中判断并刷新课程表
 static void add_button(const char *str, uint16_t sleep = 0, lv_color_t color = lv_palette_main(LV_PALETTE_BLUE))
@@ -77,6 +77,8 @@ static void change_week()
  */
 static void class_save()
 {
+    if (!modified)
+        return;
     alarm_sort();
     alarm_save();
     full_screen_msgbox(BIG_SYMBOL_CHECK, "课程管理", "保存成功", FULL_SCREEN_BG_CHECK, 2000);
@@ -150,6 +152,7 @@ start:
     {
         a.time_end = a.time_start = msgbox_time("开始时间");
     }
+    modified = true;
     return alarm_add(a.type, a.subtype, a.week, a.time_start, a.time_end);
 }
 /**
@@ -167,6 +170,7 @@ static void class_delete(uint8_t num)
     {
         class_p[i] = class_p[i + 1];
     }
+    modified = true;
     --total; //显示的课程总数-1
 }
 
@@ -215,9 +219,17 @@ static void modify_class_dialog(uint8_t num)
                 a->time_end = a->time_start + 40;
                 if (a->time_end > 23 * 60 + 59)
                     a->time_end = 23 * 60 + 59;
+                a->subtype = 0;
             }
             a->type = ALARM_CLASS;
-            a->subtype = 0;
+            menu_create();
+            for (uint8_t i = 0; i < CLASS_NAMES_COUNT; ++i)
+            {
+                menu_add(class_names[i]);
+            }
+            r = menu_show(a->subtype+1) - 1;
+            if (r != 0xff)
+                a->subtype = r;
             break;
         case 2:
             a->type = ALARM_USER;
@@ -232,19 +244,19 @@ static void modify_class_dialog(uint8_t num)
     case 3:
         if (a->type == ALARM_CLASS)
         {
-            a->time_start = msgbox_time("上课时间");
+            a->time_start = msgbox_time("上课时间", a->time_start);
             if (msgbox_yn("是否快速设置40分钟课程时长？"))
             {
                 a->time_end = a->time_start + 40;
             }
             else
             {
-                a->time_end = msgbox_time("下课时间", a->time_start);
+                a->time_end = msgbox_time("下课时间", a->time_end);
             }
         }
         else
         {
-            a->time_end = a->time_start = msgbox_time("开始时间");
+            a->time_end = a->time_start = msgbox_time("开始时间", a->time_start);
         }
         break;
     case 4:
@@ -262,6 +274,7 @@ static void modify_class_dialog(uint8_t num)
         return;
     }
     REQUESTLV();
+    modified = true;
     lv_obj_set_style_bg_color(lv_obj_get_child(timetable, num + 1), lv_palette_main(LV_PALETTE_RED), 0);
     RELEASELV();
 }
@@ -368,6 +381,7 @@ static void wf_class_loop(void)
             while (hal.btnEnter.isPressedRaw())
                 vTaskDelay(50);
             class_save();
+            alarm_update();
             while (hal.btnEnter.isPressedRaw())
                 vTaskDelay(50);
             vTaskDelay(30);
