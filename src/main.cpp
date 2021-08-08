@@ -1,3 +1,29 @@
+/*
+ *                        _oo0oo_
+ *                       o8888888o
+ *                       88" . "88
+ *                       (| -_- |)
+ *                       0\  =  /0
+ *                     ___/`---'\___
+ *                   .' \\|     |// '.
+ *                  / \\|||  :  |||// \
+ *                 / _||||| -:- |||||- \
+ *                |   | \\\  - /// |   |
+ *                | \_|  ''\---/''  |_/ |
+ *                \  .-\__  '-'  ___/-. /
+ *              ___'. .'  /--.--\  `. .'___
+ *           ."" '<  `.___\_<|>_/___.' >' "".
+ *          | | :  `- \`.;`\ _ /`;.`/ - ` : | |
+ *          \  \ `_.   \_ __\ /__ _/   .-` /  /
+ *      =====`-.____`.___ \_____/___.-`___.-'=====
+ *                        `=---='
+ * 
+ * 
+ *      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * 
+ *            佛祖保佑       永不宕机     永无BUG
+ */
+
 #include "A_config.h"
 #include <rom/rtc.h>
 
@@ -86,7 +112,7 @@ void setup()
     xTaskCreatePinnedToCore(light_sleep_loop, "LightSleeper", 2048, NULL, configMAX_PRIORITIES - 2, NULL, CONFIG_ARDUINO_RUNNING_CORE);
     xTaskCreatePinnedToCore(taskHALUpdate, "HALUpdate", 3824, NULL, configMAX_PRIORITIES - 2, NULL, !CONFIG_ARDUINO_RUNNING_CORE);
 
-    if(alarm_load())
+    if(!alarm_load())
     {
         alarm_format();
     }

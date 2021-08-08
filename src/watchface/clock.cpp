@@ -20,7 +20,6 @@ static RTC_DATA_ATTR uint8_t digits[6];
 static uint8_t digits_now[6];
 static uint16_t label_y[6];
 static uint32_t remaining;
-
 static void wf_clock_anim_set(lv_obj_t *label[2], uint16_t y, uint16_t delaytime)
 {
     lv_anim_t a;
@@ -51,14 +50,14 @@ static void swap_class(uint16_t p)
     {
         if (next_class == NULL)
         {
-            lv_obj_set_style_opa(lblCurrentClass[0], 0, 0);
-            lv_obj_set_style_opa(lblNextClass[0], 0, 0);
+            lv_label_set_text(lblCurrentClass[0], "无");
+            lv_label_set_text(lblNextClass[0], "无");
             RELEASELV();
             return;
         }
         else
         {
-            lv_label_set_text_fmt(lblCurrentClass[1], "不可用");
+            lv_label_set_text(lblCurrentClass[1], "不可用");
             lv_label_set_text_fmt(lblNextClass[1], "%s", class_names[next_class->subtype]);
         }
     }
@@ -115,17 +114,17 @@ static void wf_clock_loop()
         lv_label_set_text_fmt(lblDate, "20%02d/%02d/%02d  %s", hal.rtc.getYear(), hal.rtc.getMonth(), hal.rtc.getDate(), week_name[week = hal.rtc.getDoW()]);
         RELEASELV();
         p = hour * 60 + minute;
-        if (curr_class != alarm_get_curr(week, p) || breakflag != alarm_get_next(week, p))
+        if (curr_class != class_get_curr(week, p) || breakflag != class_get_next(week, p))
         {
             //更新闹钟信息
-            breakflag = alarm_get_next(week, p);
-            curr_class = alarm_get_curr(week, p);
-            next_class = alarm_get_next_no_curr(week, p);
+            breakflag = class_get_next(week, p);
+            curr_class = class_get_curr(week, p);
+            next_class = class_get_next_no_curr(week, p);
             alarm_check();
             alarm_update();
             if (next_class == NULL)
             {
-                next_class = alarm_get_next_no_curr(1, 0);
+                next_class = class_get_next_no_curr(1, 0);
             }
             swap_class(p);
         }
@@ -176,7 +175,7 @@ static void wf_clock_loop()
         }
         REQUESTLV();
         lv_bar_set_value(bar1, map(remaining, maxval, 0, 0, 100), LV_ANIM_ON);
-        lv_label_set_text_fmt(lblRemaining, "%d", remaining);
+        lv_label_set_text_fmt(lblRemaining, "%02d:%02d:%02d", remaining / 3600, remaining % 3600 / 60, remaining % 60);
         RELEASELV();
     }
     hal.canDeepSleep = true;
@@ -194,8 +193,8 @@ static void wf_clock_loop()
             {
             case 1:
                 hal.fLoop = NULL;
+                pushWatchFace(wf_clock_load);
                 wf_class_load();
-                wf_clock_load();
                 return;
             case 2:
                 menu_create();
@@ -278,12 +277,12 @@ void wf_clock_load(void)
 {
     uint8_t week = hal.rtc.getDoW();
     uint16_t p = hal.rtc.getHour() * 60 + hal.rtc.getMinute();
-    breakflag = alarm_get_next(week, p);
-    curr_class = alarm_get_curr(week, p);
-    next_class = alarm_get_next_no_curr(week, p);
+    breakflag = class_get_next(week, p);
+    curr_class = class_get_curr(week, p);
+    next_class = class_get_next_no_curr(week, p);
     if (next_class == NULL)
     {
-        next_class = alarm_get_next_no_curr(0, 0);
+        next_class = class_get_next_no_curr(0, 0);
     }
     REQUESTLV();
     if (lv_scr_act())
@@ -356,7 +355,7 @@ void wf_clock_load(void)
     lblDate = lv_label_create(scr_clock);
     lv_obj_set_style_text_font(lblDate, &lv_font_chinese_16, 0);
     lv_obj_align(lblDate, LV_ALIGN_CENTER, 0, -88);
-
+    swap_class(hal.rtc.getMinute() + hal.rtc.getHour() * 60);
     RELEASELV();
 
     hal.fLoop = wf_clock_loop;

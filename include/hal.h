@@ -32,7 +32,7 @@ public:
     bool connectWiFi();
     void disconnectWiFi();
     bool NTPSync();
-    loopFunc fLoop = NULL;
+    volatile loopFunc fLoop = NULL;
     uint8_t Brightness = 60;
     Button2 btnUp, btnDown, btnEnter;
     BlueDot_BMA400 acc;

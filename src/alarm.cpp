@@ -64,10 +64,9 @@ void alarm_sort()
     }
 }
 
-alarm_t *alarm_add(enum alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end, bool enable)
+alarm_t *alarm_add(enum alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end)
 {
     if(alarms.alarm_count >= 200)return NULL;
-    alarms.alarm[alarms.alarm_count].enable = enable;
     alarms.alarm[alarms.alarm_count].type = type;
     alarms.alarm[alarms.alarm_count].subtype = subtype;
     alarms.alarm[alarms.alarm_count].week = week;
@@ -97,11 +96,11 @@ void alarm_del(uint8_t week, uint16_t time_start, uint16_t time_end)
     }
 }
 
-//获取下一节课
+//获取下个闹钟
 alarm_t *alarm_get_next(uint8_t week, uint16_t now)
 {
     uint16_t q1 = (int)week * 24 * 60 + (int)now;
-    alarm_t dummy = {ALARM_CLASS, 0, 0, week, 9999, 9999, 0xffff};
+    alarm_t dummy = {ALARM_CLASS, 0, week, 9999, 9999, 0xffff};
     alarm_t *nearest = &dummy;
     for (uint8_t i = 0; i < alarms.alarm_count; ++i)
     {
@@ -118,20 +117,46 @@ alarm_t *alarm_get_next(uint8_t week, uint16_t now)
         return nearest;
     return NULL;
 }
+//获取下一节课
+//我也不知道为什么不能用alarm_get_next，反正这样写就能正常运行，不然无限重启
+alarm_t *class_get_next(uint8_t week, uint16_t now)
+{
+    uint16_t q1 = (int)week * 24 * 60 + (int)now;
+    alarm_t dummy = {ALARM_CLASS, 0, week, 9999, 9999, 0xffff};
+    alarm_t *nearest = &dummy;
+    for (uint8_t i = 0; i < alarms.alarm_count; ++i)
+    {
+        if (alarms.alarm[i].type != ALARM_CLASS)
+            continue;
+        if (alarms.alarm[i].q <= nearest->q && alarms.alarm[i].q > q1 && alarms.alarm[i].type != ALARM_NONE)
+        {
+            nearest = &alarms.alarm[i];
+        }
+        if (alarms.alarm[i].week == week && alarms.alarm[i].time_start <= now && alarms.alarm[i].time_end > now && alarms.alarm[i].type != ALARM_NONE)
+        {
+            return &alarms.alarm[i];
+        }
+    }
+    if (nearest != &dummy)
+        return nearest;
+    return NULL;
+}
 
 //此函数同get_next，但是不会返回正在进行的课程
-alarm_t *alarm_get_next_no_curr(uint8_t week, uint16_t now)
+alarm_t *class_get_next_no_curr(uint8_t week, uint16_t now)
 {
-    alarm_t dummy = {ALARM_CLASS, 0, 0, week, 9999, 9999, 0xffff};
+    alarm_t dummy = {ALARM_CLASS, 0, week, 9999, 9999, 0xffff};
     uint16_t q1 = (int)week * 24 * 60 + (int)now;
     alarm_t *nearest = &dummy;
     for (uint8_t i = 0; i < alarms.alarm_count; ++i)
     {
+        if (alarms.alarm[i].type != ALARM_CLASS)
+            continue;
         if (alarms.alarm[i].week == week && alarms.alarm[i].time_start <= now && alarms.alarm[i].time_end > now)
         {
             continue;
         }
-        if (alarms.alarm[i].q <= nearest->q && alarms.alarm[i].q > q1 && alarms.alarm[i].type != ALARM_NONE)
+        if (alarms.alarm[i].q <= nearest->q && alarms.alarm[i].q > q1)
         {
             nearest = &alarms.alarm[i];
         }
@@ -141,15 +166,15 @@ alarm_t *alarm_get_next_no_curr(uint8_t week, uint16_t now)
     return NULL;
 }
 
-alarm_t *alarm_get_curr(uint8_t week, uint16_t now)
+alarm_t *class_get_curr(uint8_t week, uint16_t now)
 {
     uint16_t qn = (int)week * 24 * 60 + (int)now;
-    alarm_t dummy = {ALARM_CLASS, 0, 0, week, 0, 0, 0};
+    alarm_t dummy = {ALARM_CLASS, 0, week, 0, 0, 0};
     alarm_t *nearest = &dummy;
     for (uint8_t i = 0; i < alarms.alarm_count; ++i)
     {
         //判断，找出下课时间最近的class，且已经上完
-        if (alarms.alarm[i].type == ALARM_NONE)
+        if (alarms.alarm[i].type != ALARM_CLASS)
             continue;
         uint16_t qi, qc;
         qi = (int)alarms.alarm[i].week * 60 * 24 + alarms.alarm[i].time_end;
@@ -170,16 +195,15 @@ alarm_t *alarm_get_curr(uint8_t week, uint16_t now)
 
 alarm_t *alarm_get_today(uint8_t week, uint8_t num)
 {
-    ++num;
     for (uint8_t i = 0; i < alarms.alarm_count; ++i)
     {
         if (alarms.alarm[i].week == week && alarms.alarm[i].type != ALARM_NONE)
         {
-            --num;
             if (num == 0)
             {
                 return &alarms.alarm[i];
             }
+            --num;
         }
     }
     return NULL;
@@ -223,9 +247,12 @@ void alarm_update()
         current_alarm = a;
     }
 }
-
+/**
+ * @brief 检查闹钟是否触发，如果是则弹出对话框并更新闹钟
+ */
 void alarm_check()
 {
+//TODO: 添加振动功能
     uint16_t now_min = hal.rtc.getHour() * 60 + hal.rtc.getMinute();
     if (hal.rtc.checkIfAlarm(1))
     {

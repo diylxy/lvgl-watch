@@ -1,3 +1,11 @@
+/*
+ * @Author: your name
+ * @Date: 2021-07-24 21:21:00
+ * @LastEditTime: 2021-08-07 22:13:01
+ * @LastEditors: your name
+ * @Description: In User Settings Edit
+ * @FilePath: \open-smartwatch-lvgl\include\alarm.h
+ */
 #ifndef __ALARM_H__
 #define __ALARM_H__
 
@@ -14,7 +22,6 @@ typedef struct
 {
     enum alarm_type type;
     uint8_t subtype; //子类型，alarm_class专用
-    bool enable;
     uint8_t week;
     uint16_t time_start;
     uint16_t time_end; //结束时间，alarm_class专用
@@ -28,11 +35,12 @@ typedef struct
 } alarm_file_t;
 void alarm_format();
 void alarm_sort();
-alarm_t *alarm_add(enum alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end, bool enable);
+alarm_t *alarm_add(enum alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end);
 void alarm_del(uint8_t week, uint16_t time_start, uint16_t time_end);
 alarm_t *alarm_get_next(uint8_t week, uint16_t now);
-alarm_t * alarm_get_curr(uint8_t week, uint16_t now);
-alarm_t *alarm_get_next_no_curr(uint8_t week, uint16_t now);
+alarm_t *class_get_next(uint8_t week, uint16_t now);
+alarm_t * class_get_curr(uint8_t week, uint16_t now);
+alarm_t *class_get_next_no_curr(uint8_t week, uint16_t now);
 alarm_t *alarm_get_today(uint8_t week, uint8_t num);
 void alarm_update();
 void alarm_check();

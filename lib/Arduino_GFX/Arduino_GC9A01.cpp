@@ -252,7 +252,6 @@ void Arduino_GC9A01::tftInit()
   _bus->sendCommand(GC9A01_SLPOUT);
   delay(GC9A01_SLPOUT_DELAY);
   _bus->sendCommand(GC9A01_DISPON);
-  delay(20);
 }
 
 void Arduino_GC9A01::writeAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h)

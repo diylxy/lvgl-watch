@@ -386,7 +386,6 @@ void full_screen_msgbox(const char *icon, const char *title, const char *str, lv
 {
     full_screen_msgbox_wait_del(full_screen_msgbox_create(icon, title, str, bg_color), auto_back);
 }
-
 void countdown(void)
 {
     uint8_t start_sec = hal.rtc.getSecond();
@@ -479,10 +478,11 @@ bool msgbox_yn(const char *str)
     lv_obj_t *cur_scr = lv_scr_act();
     lv_obj_t *window = lv_obj_create(NULL);
     lv_obj_t *lbl = lv_label_create(window);
-    uint8_t btnSel = 0;
+    uint8_t btnSel = 1;
     lv_obj_t *btns[2];
 
     lv_label_set_long_mode(lbl, LV_LABEL_LONG_WRAP);
+    lv_obj_set_width(lbl, 180);
     lv_obj_set_style_text_align(lbl, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(lbl, LV_ALIGN_CENTER, 0, -60);
     lv_obj_set_style_text_font(lbl, &lv_font_chinese_16, 0);
@@ -543,7 +543,7 @@ bool msgbox_yn(const char *str)
 uint16_t msgbox_time(const char *str, uint16_t value_pre)
 {
     lv_obj_t *spinbox = NULL;
-    volatile uint16_t spinbox_val;
+    uint16_t spinbox_val = value_pre;
     uint8_t pos = 0;
     while (hal.btnEnter.isPressedRaw())
         vTaskDelay(50);
@@ -552,13 +552,10 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
     lv_obj_t *scr = lv_obj_create(lv_layer_top());
     lv_obj_set_size(scr, 130, 88);
     lv_obj_center(scr);
-    spinbox_val = value_pre/60;
-    spinbox_val *= 100;
-    spinbox_val += value_pre %60;
     spinbox = lv_spinbox_create(scr);
     lv_spinbox_set_range(spinbox, 0, 2359);
     lv_spinbox_set_digit_format(spinbox, 4, 2);
-    lv_spinbox_set_value(spinbox, spinbox_val);
+    lv_spinbox_set_value(spinbox, (uint16_t)(spinbox_val / 60) * 100 + spinbox_val % 60);
     lv_spinbox_set_rollover(spinbox, true);
     lv_spinbox_set_step(spinbox, 1000);
     lv_obj_set_width(spinbox, 100);
@@ -579,19 +576,19 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
     {
         if (hal.btnUp.isPressedRaw())
         {
-            uint16_t i;
-            switch (lv_spinbox_get_step(spinbox))
+            uint16_t i=1;
+            switch (pos)
             {
-            case 1:
+            case 3:
                 i = 1;
                 break;
-            case 10:
+            case 2:
                 i = 10;
                 break;
-            case 100:
+            case 1:
                 i = 60;
                 break;
-            case 1000:
+            case 0:
                 i = 600;
                 break;
             default:
@@ -602,25 +599,25 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
             if (spinbox_val > 23 * 60 + 59)
                 spinbox_val = 0;
             REQUESTLV();
-            lv_spinbox_set_value(spinbox, (int)(spinbox_val / 60) * 100 + spinbox_val % 60);
+            lv_spinbox_set_value(spinbox, (uint16_t)(spinbox_val / 60) * 100 + spinbox_val % 60);
             RELEASELV();
             vTaskDelay(300);
         }
         if (hal.btnDown.isPressedRaw())
         {
-            uint16_t i;
-            switch (lv_spinbox_get_step(spinbox))
+            uint16_t i=1;
+            switch (pos)
             {
-            case 1:
+            case 3:
                 i = 1;
                 break;
-            case 10:
+            case 2:
                 i = 10;
                 break;
-            case 100:
+            case 1:
                 i = 60;
                 break;
-            case 1000:
+            case 0:
                 i = 600;
                 break;
             default:
@@ -631,7 +628,7 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
             if (spinbox_val > 23 * 60 + 59)
                 spinbox_val = 23 * 60 + 59;
             REQUESTLV();
-            lv_spinbox_set_value(spinbox, (int)(spinbox_val / 60) * 100 + spinbox_val % 60);
+            lv_spinbox_set_value(spinbox, (uint16_t)(spinbox_val / 60) * 100 + spinbox_val % 60);
             RELEASELV();
             vTaskDelay(300);
         }
