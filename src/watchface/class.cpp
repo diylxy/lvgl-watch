@@ -227,7 +227,7 @@ static void modify_class_dialog(uint8_t num)
             {
                 menu_add(class_names[i]);
             }
-            r = menu_show(a->subtype+1) - 1;
+            r = menu_show(a->subtype + 1) - 1;
             if (r != 0xff)
                 a->subtype = r;
             break;
@@ -435,6 +435,7 @@ void wf_class_load(void)
     if (lv_scr_act())
         lv_obj_del(lv_scr_act());
     week_changed = false;
+    modified = false;
     scr_class = lv_obj_create(NULL);
     lv_scr_load(scr_class);
     total = 0;
