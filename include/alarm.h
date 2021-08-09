@@ -9,18 +9,15 @@
 #ifndef __ALARM_H__
 #define __ALARM_H__
 
-
-enum alarm_type
-{
-    ALARM_NONE = 0,
-    ALARM_CLASS,
-    ALARM_USER,
-    ALARM_COUNTDOWN
-};
-
+#define ALARM_NONE 0
+#define ALARM_CLASS 1
+#define ALARM_USER 2
+#define ALARM_COUNTDOWN 3
+typedef uint8_t alarm_type;
+//注意：未知原因，uint8_t占用两个字节
 typedef struct
 {
-    enum alarm_type type;
+    alarm_type type;
     uint8_t subtype; //子类型，alarm_class专用
     uint8_t week;
     uint16_t time_start;
@@ -35,7 +32,7 @@ typedef struct
 } alarm_file_t;
 void alarm_format();
 void alarm_sort();
-alarm_t *alarm_add(enum alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end);
+alarm_t *alarm_add(alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end);
 void alarm_del(uint8_t week, uint16_t time_start, uint16_t time_end);
 alarm_t *alarm_get_next(uint8_t week, uint16_t now);
 alarm_t *class_get_next(uint8_t week, uint16_t now);

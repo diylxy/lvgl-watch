@@ -6,7 +6,7 @@
 WebServer server(80);
 static lv_obj_t *scr_webserver;
 static File uploadFile;
-static const char *serverIndex = "<a href=\"gettimetable\">GetTimeTableFile-下载时间表文件</a>";
+static const char *serverIndex = "<a href=\"alarm.bin\">GetTimeTableFile-下载时间表文件</a>";
 static void handleGetTimetable()
 {
     String contentType = "application/octet-stream";
@@ -44,6 +44,10 @@ static void handleFileUpload()
         if (uploadFile)
         {
             uploadFile.close();
+            alarm_load();
+            alarm_sort();
+            alarm_update();
+            alarm_save();
         }
     }
 }
@@ -122,7 +126,7 @@ void wf_webserver_load(void)
     }
 
     server.on("/", handleRoot);
-    server.on("/gettimetable", handleGetTimetable);
+    server.on("/alarm.bin", handleGetTimetable);
     server.on(
         "/updatetimetable", HTTP_POST, []()
         {

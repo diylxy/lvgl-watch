@@ -64,7 +64,7 @@ void alarm_sort()
     }
 }
 
-alarm_t *alarm_add(enum alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end)
+alarm_t *alarm_add(alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end)
 {
     if (alarms.alarm_count >= 200)
         return NULL;
@@ -270,7 +270,6 @@ void alarm_update()
  */
 void alarm_check()
 {
-    //TODO: 添加振动功能
     uint16_t now_min = hal.rtc.getHour() * 60 + hal.rtc.getMinute();
     if (hal.rtc.checkIfAlarm(1))
     {
@@ -293,6 +292,7 @@ void alarm_check()
         else if (current_alarm->type == ALARM_USER)
         {
             uint8_t c = 0; //振动计数器，如果一直未按下按键则自动退出
+            hal.DoNotSleep = true;
             lv_obj_t *msg = full_screen_msgbox_create(BIG_SYMBOL_BELL, "自定义闹钟", "按下右侧两按键退出", FULL_SCREEN_BG_BELL);
             while (!(hal.btnUp.isPressedRaw() && hal.btnDown.isPressedRaw()))
             {
@@ -302,6 +302,7 @@ void alarm_check()
                 if(c >= ALARM_AUTO_STOP)break;
             }
             full_screen_msgbox_del(msg);
+            hal.DoNotSleep = false;
         }
         else
         {
