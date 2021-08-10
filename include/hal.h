@@ -45,6 +45,7 @@ public:
     volatile bool DoNotSleep = false;
     volatile bool RTCInterrupted = false;
     volatile bool canDeepSleep = false;
+    volatile bool enableAnimation = false;
 private:
     struct motor_seq
     {

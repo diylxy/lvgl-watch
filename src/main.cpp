@@ -28,6 +28,7 @@
 #include <rom/rtc.h>
 
 Watch_HAL hal;
+configManager config;
 static uint32_t last_millis = 0;
 static lv_obj_t *lblBattery;
 static lv_obj_t *lblTime;
@@ -104,6 +105,7 @@ void setup()
     }
 
     hal.begin();
+    config.loadConfigs();
     //电池图标
     lblBattery = lv_label_create(lv_layer_top());
     lv_label_set_text(lblBattery, LV_SYMBOL_BATTERY_EMPTY);

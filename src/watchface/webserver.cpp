@@ -24,13 +24,16 @@ static void handleGetTimetable()
 static void handleFileUpload()
 {
     HTTPUpload &upload = server.upload();
+    String filename = upload.filename;
+    if (filename != "alarm.bin" && filename != "config.json")
+        return;
     if (upload.status == UPLOAD_FILE_START)
     {
-        if (SPIFFS.exists("/alarm.bin"))
+        if (SPIFFS.exists("/" + filename))
         {
-            SPIFFS.remove("/alarm.bin");
+            SPIFFS.remove("/" + filename);
         }
-        uploadFile = SPIFFS.open("/alarm.bin", FILE_WRITE);
+        uploadFile = SPIFFS.open("/" + filename, FILE_WRITE);
     }
     else if (upload.status == UPLOAD_FILE_WRITE)
     {
@@ -130,7 +133,7 @@ void wf_webserver_load(void)
     server.on(
         "/updatetimetable", HTTP_POST, []()
         {
-            if(server.method() != HTTP_POST)
+            if (server.method() != HTTP_POST)
             {
                 server.send(400, "text/plain", "Bad Request");
                 return;

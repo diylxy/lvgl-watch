@@ -21,6 +21,7 @@ static RTC_DATA_ATTR uint8_t digits[6];
 static uint8_t digits_now[6];
 static uint16_t label_y[6];
 static uint32_t remaining;
+static bool noanimfirst = true; //第一次不显示课程更新动画
 static void wf_clock_anim_set(lv_obj_t *label[2], uint16_t y, uint16_t delaytime)
 {
     lv_anim_t a;
@@ -73,6 +74,19 @@ static void swap_class(uint16_t p)
         //当前课程未结束
         lv_label_set_text_fmt(lblCurrentClass[1], "%s----->", class_names[curr_class->subtype]);
         lv_label_set_text_fmt(lblNextClass[1], "下课|%s", class_names[next_class->subtype]);
+    }
+    if (noanimfirst)
+    {
+        swap = lblCurrentClass[0];
+        lblCurrentClass[0] = lblCurrentClass[1];
+        lblCurrentClass[1] = swap;
+
+        swap = lblNextClass[0];
+        lblNextClass[0] = lblNextClass[1];
+        lblNextClass[1] = swap;
+        noanimfirst = false;
+        RELEASELV();
+        return;
     }
     wf_clock_anim_set(lblCurrentClass, class_y, 0);
     wf_clock_anim_set(lblNextClass, class_y, 200);
@@ -265,7 +279,7 @@ static void wf_clock_loop()
                 }
                 break;
             case 3:
-                countdown();
+                msgbox_number("Test", 4, 1, 9999, -9999, 0);
                 break;
             default:
                 break;
@@ -293,6 +307,20 @@ void wf_clock_load(void)
     scr_clock = lv_obj_create(NULL);
     lv_scr_load(scr_clock);
 
+    //背景
+    lv_obj_t *bg = lv_obj_create(scr_clock);
+    lv_obj_set_style_border_width(bg, 0, 0);
+    lv_obj_set_size(bg, 240, 108);
+    lv_obj_set_pos(bg, 0, 0);
+    lv_obj_set_style_bg_color(bg, lv_palette_main(LV_PALETTE_BLUE), 0);
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
+    lv_anim_set_var(&a, bg);
+    lv_anim_set_time(&a, 600);
+    lv_anim_set_values(&a, 70, 108);
+    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_height);
+    lv_anim_start(&a);
     //课程进度条、倒计时
 
     bar1 = lv_bar_create(scr_clock);
@@ -336,6 +364,8 @@ void wf_clock_load(void)
         lv_obj_set_y(lblTime[i][0], 120 - 32 - 32);
         lv_obj_set_x(lblTime[i][1], 40 + 32 * i);
         lv_obj_set_y(lblTime[i][1], label_y[i] = 120 - 32 - 32); //暂存y,之后动画要用到
+        lv_obj_set_style_text_color(lblTime[i][0], lv_color_white(), 0);
+        lv_obj_set_style_text_color(lblTime[i][1], lv_color_white(), 0);
     }
     for (uint8_t i = 4; i < 6; ++i)
     {
@@ -349,6 +379,8 @@ void wf_clock_load(void)
         lv_obj_set_y(lblTime[i][0], 120 - 32 - 32 + 16 + 4);
         lv_obj_set_x(lblTime[i][1], 104 + 16 * i);
         lv_obj_set_y(lblTime[i][1], label_y[i] = 120 - 32 - 32 + 16 + 4);
+        lv_obj_set_style_text_color(lblTime[i][0], lv_color_white(), 0);
+        lv_obj_set_style_text_color(lblTime[i][1], lv_color_white(), 0);
     }
     for (uint8_t i = 0; i < 6; ++i)
     {
@@ -357,6 +389,8 @@ void wf_clock_load(void)
     lblDate = lv_label_create(scr_clock);
     lv_obj_set_style_text_font(lblDate, &lv_font_chinese_16, 0);
     lv_obj_align(lblDate, LV_ALIGN_CENTER, 0, -88);
+    lv_obj_set_style_text_color(lblDate, lv_color_white(), 0);
+    noanimfirst = true;
     swap_class(hal.rtc.getMinute() + hal.rtc.getHour() * 60);
     RELEASELV();
 

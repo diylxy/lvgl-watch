@@ -576,7 +576,7 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
     {
         if (hal.btnUp.isPressedRaw())
         {
-            uint16_t i=1;
+            uint16_t i = 1;
             switch (pos)
             {
             case 3:
@@ -601,11 +601,11 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
             REQUESTLV();
             lv_spinbox_set_value(spinbox, (uint16_t)(spinbox_val / 60) * 100 + spinbox_val % 60);
             RELEASELV();
-            vTaskDelay(300);
+            vTaskDelay(200);
         }
         if (hal.btnDown.isPressedRaw())
         {
-            uint16_t i=1;
+            uint16_t i = 1;
             switch (pos)
             {
             case 3:
@@ -630,7 +630,7 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
             REQUESTLV();
             lv_spinbox_set_value(spinbox, (uint16_t)(spinbox_val / 60) * 100 + spinbox_val % 60);
             RELEASELV();
-            vTaskDelay(300);
+            vTaskDelay(200);
         }
         if (hal.btnEnter.isPressedRaw())
         {
@@ -656,4 +656,80 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
     while (hal.btnEnter.isPressedRaw())
         vTaskDelay(50);
     return spinbox_val;
+}
+
+int msgbox_number(const char *str, uint16_t digits, uint16_t dotat, int max, int min, int value_pre)
+{
+    lv_obj_t *spinbox = NULL;
+    uint8_t pos = 0;
+    while (hal.btnEnter.isPressedRaw())
+        vTaskDelay(50);
+    REQUESTLV();
+    curr_scr = lv_scr_act();
+    lv_obj_t *scr = lv_obj_create(lv_layer_top());
+    lv_obj_set_size(scr, 130, 88);
+    lv_obj_center(scr);
+    spinbox = lv_spinbox_create(scr);
+    lv_spinbox_set_range(spinbox, min, max);
+    lv_spinbox_set_digit_format(spinbox, digits, dotat);
+    lv_spinbox_set_value(spinbox, value_pre);
+    lv_spinbox_set_rollover(spinbox, true);
+    lv_obj_set_width(spinbox, 100);
+    lv_obj_set_style_text_align(spinbox, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(spinbox, LV_ALIGN_CENTER, 0, 10);
+    for(uint8_t i = 0; i < digits; ++i)
+    {
+        lv_spinbox_step_prev(spinbox);
+    }
+    lv_obj_t *lbl = lv_label_create(scr);
+    lv_obj_set_style_text_font(lbl, &lv_font_chinese_16, 0);
+    lv_obj_set_style_text_align(lbl, LV_TEXT_ALIGN_CENTER, 0);
+    lv_label_set_text(lbl, str);
+    lv_obj_set_width(lbl, 100);
+    lv_label_set_long_mode(lbl, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_align(lbl, LV_ALIGN_CENTER, 0, -20);
+
+    lv_obj_fade_in(scr, 300, 0);
+    RELEASELV();
+    while (1)
+    {
+        if (hal.btnUp.isPressedRaw())
+        {
+            REQUESTLV();
+            lv_spinbox_increment(spinbox);
+            RELEASELV();
+            vTaskDelay(200);
+        }
+        if (hal.btnDown.isPressedRaw())
+        {
+            REQUESTLV();
+            lv_spinbox_decrement(spinbox);
+            RELEASELV();
+            vTaskDelay(200);
+        }
+        if (hal.btnEnter.isPressedRaw())
+        {
+            REQUESTLV();
+            lv_spinbox_step_next(spinbox);
+            RELEASELV();
+            ++pos;
+            if (pos == digits)
+                break;
+            while (hal.btnEnter.isPressedRaw())
+                vTaskDelay(20);
+            vTaskDelay(50);
+        }
+        vTaskDelay(50);
+    }
+    value_pre = lv_spinbox_get_value(spinbox);
+    REQUESTLV();
+    lv_obj_fade_out(scr, 250, 0);
+    RELEASELV();
+    vTaskDelay(300);
+    REQUESTLV();
+    lv_obj_del(scr);
+    RELEASELV();
+    while (hal.btnEnter.isPressedRaw())
+        vTaskDelay(50);
+    return value_pre;
 }

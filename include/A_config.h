@@ -43,4 +43,5 @@
 #include "gui.h"
 #include "hal.h"
 #include "watchfaces.h"
+#include "configManager.h"
 #endif
