@@ -6,7 +6,6 @@
 WebServer server(80);
 static lv_obj_t *scr_webserver;
 static File uploadFile;
-static const char *serverIndex = "<a href=\"alarm.bin\">GetTimeTableFile-下载时间表文件</a>";
 static void handleGetTimetable()
 {
     String contentType = "application/octet-stream";
@@ -21,11 +20,25 @@ static void handleGetTimetable()
         server.send(404, "text/plain", "No Such File");
     }
 }
+static void handleGetConfig()
+{
+    String contentType = "application/octet-stream";
+    File file = SPIFFS.open(CONFFILE, "r");
+    if (file)
+    {
+        server.streamFile(file, contentType);
+        file.close();
+    }
+    else
+    {
+        server.send(404, "text/plain", "No Such File");
+    }
+}
 static void handleFileUpload()
 {
     HTTPUpload &upload = server.upload();
     String filename = upload.filename;
-    if (filename != "alarm.bin" && filename != "config.json")
+    if (filename != "alarm.bin" && filename != CONFFILE)
         return;
     if (upload.status == UPLOAD_FILE_START)
     {
@@ -54,9 +67,9 @@ static void handleFileUpload()
         }
     }
 }
-static void handleRoot()
+void handleRoot()
 {
-    server.send(200, "text/html", serverIndex);
+    hal.conf.handleFormRequest(&server);
 }
 
 static void handleNotFound()
@@ -102,8 +115,10 @@ void wf_webserver_load(void)
     RELEASELV();
     if (!msgbox_yn("直接使用软AP-确定\n尝试连接WiFi-取消"))
     {
+        //BUG: 无法使用WiFi
+        while (hal.btnEnter.isPressedRaw())
+            vTaskDelay(10);
         msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC, "WiFi", "正在连接WiFi，长按确定键取消", FULL_SCREEN_BG_SYNC);
-        hal.DoNotSleep = true;
         if (!hal.connectWiFi())
         {
             full_screen_msgbox_del(msgbox_full);
@@ -130,8 +145,9 @@ void wf_webserver_load(void)
 
     server.on("/", handleRoot);
     server.on("/alarm.bin", handleGetTimetable);
+    server.on(CONFFILE, handleGetConfig);
     server.on(
-        "/updatetimetable", HTTP_POST, []()
+        "/upload", HTTP_POST, []()
         {
             if (server.method() != HTTP_POST)
             {
@@ -139,7 +155,7 @@ void wf_webserver_load(void)
                 return;
             }
             server.sendHeader("Connection", "close");
-            server.send(200, "text/plain", "File Sent.");
+            server.send(200, "text/plain", "File Sent. (");
         },
         handleFileUpload);
 
@@ -147,6 +163,10 @@ void wf_webserver_load(void)
 
     server.begin();
     Serial.println("HTTP server started");
+    if (sap)
+    {
+        WiFi.softAPConfig(IPAddress(192, 168, 1, 1), IPAddress(192, 168, 1, 1), IPAddress(255, 255, 255, 0));
+    }
     buf = (sap ? WiFi.softAPIP().toString() : WiFi.localIP().toString()) + "\nWiFi: " + (sap ? "OpenSmartwatch" : WiFi.SSID()) + "\n确保连接到同一WiFi\n并访问此地址";
     label(buf.c_str(), 40, 40, true, 0);
     hal.DoNotSleep = true;

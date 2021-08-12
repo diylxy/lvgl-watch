@@ -1,6 +1,5 @@
 #include "A_config.h"
 
-//FIXED: 闹钟与倒计时无法触发(但是有中断)
 static lv_obj_t *scr_clock;
 
 static lv_obj_t *bar1;
@@ -60,23 +59,25 @@ static void swap_class(uint16_t p)
         else
         {
             lv_label_set_text(lblCurrentClass[1], "不可用");
-            lv_label_set_text_fmt(lblNextClass[1], "%s", class_names[next_class->subtype]);
+            lv_label_set_text_fmt(lblNextClass[1], "%s", next_class->subtype);
         }
     }
     else if (curr_class->time_end <= p)
     {
         //当前课程已结束，如果闹钟没有冲突，此时一定有next_class->time_start > p
-        lv_label_set_text_fmt(lblCurrentClass[1], "%s|课", class_names[curr_class->subtype]);
-        lv_label_set_text_fmt(lblNextClass[1], "间|%s", class_names[next_class->subtype]);
+        lv_label_set_text_fmt(lblCurrentClass[1], "%s|课", curr_class->subtype);
+        lv_label_set_text_fmt(lblNextClass[1], "间|%s", next_class->subtype);
     }
     else
     {
         //当前课程未结束
-        lv_label_set_text_fmt(lblCurrentClass[1], "%s----->", class_names[curr_class->subtype]);
-        lv_label_set_text_fmt(lblNextClass[1], "下课|%s", class_names[next_class->subtype]);
+        lv_label_set_text_fmt(lblCurrentClass[1], "%s----->", curr_class->subtype);
+        lv_label_set_text_fmt(lblNextClass[1], "下课|%s", next_class->subtype);
     }
     if (noanimfirst)
     {
+        lv_obj_fade_in(lblCurrentClass[1], 500, 0);
+        lv_obj_fade_in(lblNextClass[1], 500, 200);
         swap = lblCurrentClass[0];
         lblCurrentClass[0] = lblCurrentClass[1];
         lblCurrentClass[1] = swap;
@@ -216,6 +217,7 @@ static void wf_clock_loop()
                 menu_add(LV_SYMBOL_WIFI " WiFi Smartconfig");
                 menu_add(LV_SYMBOL_PLUS " 时间设置");
                 menu_add(LV_SYMBOL_FILE " 启动HTTP服务器");
+                menu_add("系统信息");
                 switch (menu_show())
                 {
                     lv_obj_t *msgbox_full;
@@ -274,12 +276,17 @@ static void wf_clock_loop()
                     wf_webserver_load();
                     return;
                     break;
+                case 4:
+                    pushWatchFace(wf_clock_load);
+                    wf_sysinfo_load();
+                    return;
+                    break;
                 default:
                     break;
                 }
                 break;
             case 3:
-                msgbox_number("Test", 4, 1, 9999, -9999, 0);
+                //DEBUG专用
                 break;
             default:
                 break;

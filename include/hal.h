@@ -10,7 +10,7 @@
 #include <Arduino_GC9A01.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
-
+#include <WebConfig.h>
 enum enum_motor_type
 {
     MOTOR_SLEEP,
@@ -38,6 +38,7 @@ public:
     BlueDot_BMA400 acc;
     DS3231 rtc;
     WiFiUDP Udp;
+    WebConfig conf;
     volatile bool screenMutex = false;
     TaskHandle_t handleScreenUpdate;
     volatile uint32_t release_time = 0;

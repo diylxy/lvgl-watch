@@ -2,12 +2,12 @@
 #include "esp_sleep.h"
 #include "driver/rtc_io.h"
 #include "FreeRTOS.h"
-
+#include "configParams.h"
 static Arduino_DataBus *bus = new Arduino_ESP32SPI_DMA(12, 5, 18, 23, -1, VSPI);
 static Arduino_TFT *gfx = new Arduino_GC9A01(bus, 33, 0 /* rotation */, true /* IPS */);
 
 static lv_disp_draw_buf_t disp_buf;
-static lv_color_t buf[DISPLAY_MAX_X * 80];
+static lv_color_t buf[DISPLAY_MAX_X * 30];
 static lv_disp_drv_t disp_drv;
 static lv_indev_drv_t indev_drv;
 static lv_disp_t *disp;
@@ -61,7 +61,7 @@ static void lvgl_begin()
 {
     lv_init();
 
-    lv_disp_draw_buf_init(&disp_buf, buf, NULL, DISPLAY_MAX_X * 80);
+    lv_disp_draw_buf_init(&disp_buf, buf, NULL, DISPLAY_MAX_X * 30);
 
     /*Initialize the display*/
     lv_disp_drv_init(&disp_drv);
@@ -85,6 +85,8 @@ void Watch_HAL::begin()
     pinMode(WATCH_TFT_LED, OUTPUT);
     digitalWrite(WATCH_TFT_LED, 0);
     pinMode(WATCH_RTC_INT, INPUT_PULLUP);
+    conf.setDescription(configParams);
+    conf.readConfig();
 
     btnUp.begin(WATCH_BUTTON_UP, INPUT, false, false);
     btnDown.begin(WATCH_BUTTON_DOWN, INPUT, false, false);
@@ -288,25 +290,29 @@ bool Watch_HAL::beginSmartconfig()
 bool Watch_HAL::connectWiFi()
 {
     uint8_t tries = 0;
+    bool donotsleepstatus = DoNotSleep;
+    DoNotSleep = true;
     WiFi.mode(WIFI_STA);
     WiFi.begin();
-    if(WiFi.SSID() == "")return false;
     while (WiFi.status() != WL_CONNECTED)
     {
         vTaskDelay(500);
         ++tries;
-        if (tries > 60)
+        if (tries > 60 || WiFi.status() == WL_CONNECT_FAILED)
         {
-            WiFi.mode(WIFI_OFF);
-            return false;
+            goto error;
         }
         if (hal.btnEnter.isPressedRaw())
         {
-            WiFi.mode(WIFI_OFF);
-            return false;
+            goto error;
         }
     }
+    DoNotSleep = donotsleepstatus;
     return true;
+error:
+    WiFi.mode(WIFI_OFF);
+    DoNotSleep = donotsleepstatus;
+    return false;
 }
 
 void Watch_HAL::disconnectWiFi()

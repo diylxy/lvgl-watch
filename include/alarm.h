@@ -13,13 +13,13 @@
 #define ALARM_CLASS 1
 #define ALARM_USER 2
 #define ALARM_COUNTDOWN 3
-typedef uint8_t alarm_type;
-//注意：未知原因，uint8_t占用两个字节
+typedef uint16_t alarm_type;
+//注意：内存对齐，uint8_t占用两个字节
 typedef struct
 {
     alarm_type type;
-    uint8_t subtype; //子类型，alarm_class专用
-    uint8_t week;
+    char subtype[16]; //子类型，alarm_class专用
+    uint16_t week;
     uint16_t time_start;
     uint16_t time_end; //结束时间，alarm_class专用
     uint16_t q;        //排序专用
@@ -30,9 +30,9 @@ typedef struct
     uint8_t alarm_count;
     alarm_t alarm[200];
 } alarm_file_t;
-void alarm_format();
+void alarm_erase();
 void alarm_sort();
-alarm_t *alarm_add(alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end);
+alarm_t *alarm_add(alarm_type type,const char *subtype, uint8_t week, uint16_t time_start, uint16_t time_end);
 void alarm_del(uint8_t week, uint16_t time_start, uint16_t time_end);
 alarm_t *alarm_get_next(uint8_t week, uint16_t now);
 alarm_t *class_get_next(uint8_t week, uint16_t now);

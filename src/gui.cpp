@@ -391,6 +391,8 @@ void countdown(void)
     uint8_t start_sec = hal.rtc.getSecond();
     uint8_t curr_sec = hal.rtc.getSecond() - 1;
     uint8_t curr_lbl = 0;
+    while (hal.btnEnter.isPressedRaw())
+        vTaskDelay(10);
     REQUESTLV();
     lv_obj_t *scr_countdown = lv_obj_create(NULL);
     lv_obj_t *cur_scr; //当前screen
@@ -677,7 +679,7 @@ int msgbox_number(const char *str, uint16_t digits, uint16_t dotat, int max, int
     lv_obj_set_width(spinbox, 100);
     lv_obj_set_style_text_align(spinbox, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(spinbox, LV_ALIGN_CENTER, 0, 10);
-    for(uint8_t i = 0; i < digits; ++i)
+    for (uint8_t i = 0; i < digits; ++i)
     {
         lv_spinbox_step_prev(spinbox);
     }

@@ -1,6 +1,4 @@
 #include "A_config.h"
-//FIXED: 闹钟或倒计时如果是当前闹钟会显示为两个，修改第二个闹钟就会重启，但是课程没问题，疑似LoadProhibited，如果把这个闹钟改为class就会无限重启
-//FIXED: 删除课程后光标按钮消失
 static lv_obj_t *scr_class;
 static lv_obj_t *timetable;
 static uint8_t selected = 0;
@@ -90,6 +88,7 @@ static void class_save()
 static alarm_t *add_class_dialog()
 {
     alarm_t a;
+    uint16_t t;
     if (total == 50)
     {
         msgbox("提示", "此处显示的课程最多50个，请保存后重试");
@@ -102,6 +101,7 @@ start:
     menu_add("添加闹钟");
     menu_add("添加倒计时");
     menu_add("切换当前星期");
+    menu_add("删除全部闹钟");
     switch (menu_show(1))
     {
     case 0:
@@ -120,6 +120,35 @@ start:
         change_week();
         return NULL;
         break;
+    case 5:
+        if (msgbox_yn("将初始化闹钟存储[课程|闹钟|倒计时|其他]\n此操作不可撤销!"))
+        {
+            uint8_t rnd = rand() % 10;
+            while (hal.btnEnter.isPressedRaw())
+                vTaskDelay(50);
+            vTaskDelay(100);
+            msgbox(LV_SYMBOL_WARNING " 警告", "请再次确认，这是最后一次机会");
+            menu_create();
+            for (uint8_t i = 0; i < 10; ++i)
+            {
+                if (i == rnd)
+                    menu_add("Yes");
+                else
+                    menu_add("No");
+            }
+            uint8_t c = rand() % 11;
+            if (c == rnd)
+                c = 0;
+            if (menu_show(c) == rnd + 1)
+            {
+                alarm_erase();
+                alarm_save();
+                full_screen_msgbox(BIG_SYMBOL_CHECK, "完成", "已清除全部闹钟信息，将于三秒后重启", FULL_SCREEN_BG_CHECK, 3000);
+                ESP.restart();
+                return NULL;
+            }
+        }
+        break;
     default:
         return NULL;
     }
@@ -130,9 +159,11 @@ start:
         {
             menu_add(class_names[i]);
         }
-        a.subtype = menu_show(1) - 1;
-        if (a.subtype == 0xff)
+        t = menu_show(1) - 1;
+        if (t == 0xff)
             goto start;
+        else
+            strcpy(a.subtype, class_names[t]);
     }
     a.week = curr_week;
     //闹钟、课程时间设置
@@ -219,7 +250,7 @@ static void modify_class_dialog(uint8_t num)
                 a->time_end = a->time_start + 40;
                 if (a->time_end > 23 * 60 + 59)
                     a->time_end = 23 * 60 + 59;
-                a->subtype = 0;
+                strcpy(a->subtype, class_names[0]);
             }
             a->type = ALARM_CLASS;
             menu_create();
@@ -227,9 +258,11 @@ static void modify_class_dialog(uint8_t num)
             {
                 menu_add(class_names[i]);
             }
-            r = menu_show(a->subtype + 1) - 1;
+            r = menu_show(1) - 1;
             if (r != 0xff)
-                a->subtype = r;
+                strcpy(a->subtype, class_names[r]);
+            else
+                return;
             break;
         case 2:
             a->type = ALARM_USER;
@@ -319,7 +352,7 @@ static void class_reload()
         char buf[40];
         if (c->type == ALARM_CLASS)
         {
-            sprintf(buf, "%s\n%02d:%02d,%d", class_names[c->subtype], c->time_start / 60, c->time_start % 60, c->time_end - c->time_start);
+            sprintf(buf, "%s\n%02d:%02d,%d", c->subtype, c->time_start / 60, c->time_start % 60, c->time_end - c->time_start);
             if (c == n)
                 add_button(buf, total * 50, lv_palette_main(LV_PALETTE_BROWN));
             else
@@ -340,11 +373,6 @@ static void class_reload()
                 add_button(buf, total * 50, lv_palette_main(LV_PALETTE_BROWN));
             else
                 add_button(buf, total * 50, lv_palette_main(LV_PALETTE_ORANGE));
-        }
-        else
-        {
-            sprintf(buf, "系统\n%02d:%02d", c->time_start / 60, c->time_start % 60);
-            add_button(buf, total * 50, lv_palette_main(LV_PALETTE_GREY));
         }
         ++selected;
     }
@@ -403,7 +431,7 @@ static void wf_class_loop(void)
             char buf[40];
             if (c->type == ALARM_CLASS)
             {
-                sprintf(buf, "%s\n%02d:%02d,%d", class_names[c->subtype], c->time_start / 60, c->time_start % 60, c->time_end - c->time_start);
+                sprintf(buf, "%s\n%02d:%02d,%d", c->subtype, c->time_start / 60, c->time_start % 60, c->time_end - c->time_start);
             }
             else if (c->type == ALARM_USER)
             {
@@ -412,10 +440,6 @@ static void wf_class_loop(void)
             else if (c->type == ALARM_COUNTDOWN)
             {
                 sprintf(buf, "倒计时\n%02d:%02d", c->time_start / 60, c->time_start % 60);
-            }
-            else
-            {
-                sprintf(buf, "系统\n%02d:%02d", c->time_start / 60, c->time_start % 60);
             }
             insert_button(buf);
         }

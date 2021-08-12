@@ -27,7 +27,7 @@ const char *week_name[] =
 };
 alarm_file_t alarms;
 RTC_DATA_ATTR alarm_t *current_alarm;
-void alarm_format()
+void alarm_erase()
 {
     memset(&alarms, 0, sizeof(alarm_file_t));
 }
@@ -64,12 +64,12 @@ void alarm_sort()
     }
 }
 
-alarm_t *alarm_add(alarm_type type, uint8_t subtype, uint8_t week, uint16_t time_start, uint16_t time_end)
+alarm_t *alarm_add(alarm_type type, const char * subtype, uint8_t week, uint16_t time_start, uint16_t time_end)
 {
     if (alarms.alarm_count >= 200)
         return NULL;
     alarms.alarm[alarms.alarm_count].type = type;
-    alarms.alarm[alarms.alarm_count].subtype = subtype;
+    strcpy(alarms.alarm[alarms.alarm_count].subtype, subtype);
     alarms.alarm[alarms.alarm_count].week = week;
     alarms.alarm[alarms.alarm_count].time_start = time_start;
     alarms.alarm[alarms.alarm_count].time_end = time_end;
@@ -102,7 +102,7 @@ alarm_t *alarm_get_next(uint8_t week, uint16_t now)
 {
     bool flagInClass = false; //用于标识正在上课，如果正在上课，但是发现一个闹钟在课程结束时间之前，则返回这个闹钟
     uint16_t q1 = (int)week * 24 * 60 + (int)now;
-    alarm_t dummy = {ALARM_CLASS, 0, week, 9999, 9999, 0xffff};
+    alarm_t dummy = {ALARM_CLASS, "Dummy", week, 9999, 9999, 0xffff};
     alarm_t *nearest = &dummy;
     for (uint8_t i = 0; i < alarms.alarm_count; ++i)
     {
@@ -129,7 +129,7 @@ alarm_t *alarm_get_next(uint8_t week, uint16_t now)
 alarm_t *class_get_next(uint8_t week, uint16_t now)
 {
     uint16_t q1 = (int)week * 24 * 60 + (int)now;
-    alarm_t dummy = {ALARM_CLASS, 0, week, 9999, 9999, 0xffff};
+    alarm_t dummy = {ALARM_CLASS, "Dummy", week, 9999, 9999, 0xffff};
     alarm_t *nearest = &dummy;
     for (uint8_t i = 0; i < alarms.alarm_count; ++i)
     {
@@ -152,7 +152,7 @@ alarm_t *class_get_next(uint8_t week, uint16_t now)
 //此函数同get_next，但是不会返回正在进行的课程
 alarm_t *class_get_next_no_curr(uint8_t week, uint16_t now)
 {
-    alarm_t dummy = {ALARM_CLASS, 0, week, 9999, 9999, 0xffff};
+    alarm_t dummy = {ALARM_CLASS, "Dummy", week, 9999, 9999, 0xffff};
     uint16_t q1 = (int)week * 24 * 60 + (int)now;
     alarm_t *nearest = &dummy;
     for (uint8_t i = 0; i < alarms.alarm_count; ++i)
