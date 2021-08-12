@@ -21,4 +21,5 @@ void wf_clock_load(void);
 void wf_class_load(void);
 void wf_webserver_load(void);
 void wf_sysinfo_load();
+void wf_weather_load();
 #endif

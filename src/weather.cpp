@@ -73,6 +73,7 @@ int8_t Weather::refresh(String cityName)
     hal.disconnectWiFi();
     hal.DoNotSleep = false;
     started = true;
+    save();
     return 0;
 }
 

@@ -39,7 +39,7 @@
 32 浓雾
 49 强浓雾
 53 霾
-54 中毒霾
+54 中度霾
 55 重度霾
 56 严重霾
 57 大雾
@@ -48,11 +48,12 @@
 301 雨
 302 雪
 */
+//weather字体：有雹中晴扬大云雨特冰浓雪多冻霾雷夹重严尘无阵暴伴浮沙雾小强阴度
 typedef struct
 {
     uint16_t weathernum;
     String weatherName;
-    uint8_t temperature;
+    int8_t temperature;
     bool isnextday;
 }weatherInfo24H;
 

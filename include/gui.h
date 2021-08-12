@@ -47,12 +47,14 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre = 0);
  */
 int msgbox_number(const char *str, uint16_t digits, uint16_t dotat, int max, int min, int value_pre);
 
-
+//字体定义
 extern const lv_font_t lv_font_chinese_16;
 extern const lv_font_t icon_64px;
 extern const lv_font_t num_32px;
 extern const lv_font_t num_48px;
 extern const lv_font_t num_64px;
+extern const lv_font_t font_weather_32;//weather字体：有雹中晴扬大云雨特冰浓雪多冻霾雷夹重严尘无阵暴伴浮沙雾小强阴度
+extern const lv_font_t font_weather_num_24;//0123456789-/℃
 //按顺序：0xf129,0xf00d, 0xf00c, 0xf128, 0xf023, 0xf0f3, 0xf021
 #define BIG_SYMBOL_INFO "\xEF\x84\xA9"
 #define BIG_SYMBOL_CROSS "\xEF\x80\x8D"

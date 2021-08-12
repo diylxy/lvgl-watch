@@ -18,6 +18,12 @@ String configParams = "["
   "'label':'天气API',"
   "'type':"+String(INPUTPASSWORD)+","
   "'default':''"
+  "},"
+  "{"
+  "'name':'city',"
+  "'label':'所在城市名',"
+  "'type':"+String(INPUTTEXT)+","
+  "'default':'北京'"
   "}"
 "]";
 /*

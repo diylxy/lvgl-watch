@@ -20,7 +20,8 @@ static RTC_DATA_ATTR uint8_t digits[6];
 static uint8_t digits_now[6];
 static uint16_t label_y[6];
 static uint32_t remaining;
-static bool noanimfirst = true; //第一次不显示课程更新动画
+static bool noanimfirst = true;  //第一次不显示课程更新动画
+static bool fromweather = false; //刚才的表盘是天气信息，如果为true，那么在load中会使用滑动动画
 static void wf_clock_anim_set(lv_obj_t *label[2], uint16_t y, uint16_t delaytime)
 {
     lv_anim_t a;
@@ -197,22 +198,42 @@ static void wf_clock_loop()
     hal.canDeepSleep = true;
     if (hal.btnEnter.isPressedRaw())
     {
+        lv_obj_t *msgbox_full;
         hal.canDeepSleep = false;
         vTaskDelay(100);
         if (hal.btnEnter.isPressedRaw())
         {
             menu_create();
             menu_add(LV_SYMBOL_BELL " 课程管理");
+            menu_add(LV_SYMBOL_DOWNLOAD " 更新天气信息");
             menu_add(LV_SYMBOL_SETTINGS " 设置");
             menu_add(LV_SYMBOL_SETTINGS " Debug 专用选项");
             switch (menu_show())
             {
             case 1:
+                //课程管理
                 hal.fLoop = NULL;
                 pushWatchFace(wf_clock_load);
                 wf_class_load();
                 return;
             case 2:
+                msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC, "天气", "尝试获取天气", FULL_SCREEN_BG_SYNC);
+                if (weather.refresh(hal.conf.getString("city")) == 0)
+                {
+                    full_screen_msgbox_del(msgbox_full);
+                    while (hal.btnEnter.isPressedRaw())
+                        vTaskDelay(10);
+                    full_screen_msgbox(BIG_SYMBOL_CHECK, "天气", "成功获取当日天气信息", FULL_SCREEN_BG_CHECK);
+                }
+                else
+                {
+                    full_screen_msgbox_del(msgbox_full);
+                    while (hal.btnEnter.isPressedRaw())
+                        vTaskDelay(10);
+                    full_screen_msgbox(BIG_SYMBOL_CROSS, "天气", "天气信息获取失败", FULL_SCREEN_BG_CROSS);
+                }
+            case 3:
+                //设置
                 menu_create();
                 menu_add(LV_SYMBOL_WIFI " WiFi Smartconfig");
                 menu_add(LV_SYMBOL_PLUS " 时间设置");
@@ -220,8 +241,8 @@ static void wf_clock_loop()
                 menu_add("系统信息");
                 switch (menu_show())
                 {
-                    lv_obj_t *msgbox_full;
                 case 1:
+                    //WiFi Smartconfig
                     full_screen_msgbox(BIG_SYMBOL_INFO, "WiFi Smartconfig", "请用手机下载ESPTouch应用，按提示操作，按下确定键开始", FULL_SCREEN_BG_INFO);
                     hal.DoNotSleep = true;
                     msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC, "WiFi Smartconfig", "正在等待Smartconfig，长按确定键1s取消", FULL_SCREEN_BG_SYNC);
@@ -243,12 +264,14 @@ static void wf_clock_loop()
                     hal.DoNotSleep = false;
                     break;
                 case 2:
+                    //时间设置
                     menu_create();
                     menu_add(LV_SYMBOL_WIFI " 同步网络时间");
                     menu_add(LV_SYMBOL_EDIT " 时钟微调");
                     switch (menu_show())
                     {
                     case 1:
+                        //同步网络时间
                         msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC, "时间同步", "正在与NTP服务器同步时间: " CONFIG_NTP_ADDR, FULL_SCREEN_BG_SYNC);
                         hal.DoNotSleep = true;
                         if (hal.NTPSync())
@@ -267,16 +290,22 @@ static void wf_clock_loop()
                         }
                         hal.DoNotSleep = false;
                         break;
+                    case 2:
+                        //时钟微调
+                        //TODO: 添加时钟微调功能
+                        break;
                     default:
                         break;
                     }
                     break;
                 case 3:
+                    //启动HTTP服务器
                     pushWatchFace(wf_clock_load);
                     wf_webserver_load();
                     return;
                     break;
                 case 4:
+                    //系统信息
                     pushWatchFace(wf_clock_load);
                     wf_sysinfo_load();
                     return;
@@ -285,13 +314,20 @@ static void wf_clock_loop()
                     break;
                 }
                 break;
-            case 3:
+            case 4:
                 //DEBUG专用
                 break;
             default:
                 break;
             }
         }
+    }
+    if (hal.btnDown.isPressedRaw())
+    {
+        fromweather = true;
+        pushWatchFace(wf_clock_load);
+        wf_weather_load();
+        return;
     }
     vTaskDelay(50 / portTICK_PERIOD_MS);
 }
@@ -308,11 +344,18 @@ void wf_clock_load(void)
         next_class = class_get_next_no_curr(0, 0);
     }
     REQUESTLV();
-    if (lv_scr_act())
-        lv_obj_del(lv_scr_act());
-
     scr_clock = lv_obj_create(NULL);
-    lv_scr_load(scr_clock);
+    if (fromweather)
+    {
+        fromweather = false;
+        lv_scr_load_anim(scr_clock, LV_SCR_LOAD_ANIM_MOVE_TOP, 300, 0, true);
+    }
+    else
+    {
+        if (lv_scr_act())
+            lv_obj_del(lv_scr_act());
+        lv_scr_load(scr_clock);
+    }
 
     //背景
     lv_obj_t *bg = lv_obj_create(scr_clock);
