@@ -21,7 +21,7 @@
  * 
  *      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * 
- *            佛祖保佑      永不宕机     永无BUG
+ *            佛祖保佑      永不宕机      永无BUG
  */
 
 #include "A_config.h"
@@ -94,6 +94,7 @@ static void task_dock_update(void *param)
 
 void setup()
 {
+    bool hiddenFunctions = false;
     Serial.begin(115200);
     if (!SPIFFS.begin(true))
     {
@@ -101,8 +102,11 @@ void setup()
         while (1)
             delay(10);
     }
-
     hal.begin();
+    if (hal.btnDown.isPressedRaw() && hal.btnEnter.isPressedRaw() && !hal.btnUp.isPressedRaw())
+    {
+        hiddenFunctions = true;
+    }
     weather.begin();
     //电池图标
     lblBattery = lv_label_create(lv_layer_top());
@@ -129,6 +133,13 @@ void setup()
         alarm_update();
     }
     Serial.println("Done");
-    wf_clock_load();
+    if (hiddenFunctions)
+    {
+        wf_hiddenfunc_load();
+    }
+    else
+    {
+        wf_clock_load();
+    }
     last_millis = millis();
 }

@@ -27,6 +27,7 @@ const char *week_name[] =
 };
 alarm_file_t alarms;
 RTC_DATA_ATTR alarm_t *current_alarm;
+
 void alarm_erase()
 {
     memset(&alarms, 0, sizeof(alarm_file_t));
@@ -112,6 +113,7 @@ alarm_t *alarm_get_next(uint8_t week, uint16_t now)
         }
         if (alarms.alarm[i].week == week && alarms.alarm[i].time_start <= now && alarms.alarm[i].time_end > now && alarms.alarm[i].type == ALARM_CLASS && nearest->type == ALARM_CLASS)
         {
+            //正在“上课”
             nearest = &alarms.alarm[i];
             flagInClass = true;
         }

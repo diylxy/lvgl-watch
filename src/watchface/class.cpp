@@ -148,7 +148,7 @@ start:
                 return NULL;
             }
         }
-        break;
+        return NULL;
     default:
         return NULL;
     }

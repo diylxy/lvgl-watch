@@ -137,7 +137,6 @@ static void wf_clock_loop()
             breakflag = class_get_next(week, p);
             curr_class = class_get_curr(week, p);
             next_class = class_get_next_no_curr(week, p);
-            alarm_check();
             alarm_update();
             if (next_class == NULL)
             {
@@ -198,6 +197,7 @@ static void wf_clock_loop()
     hal.canDeepSleep = true;
     if (hal.btnEnter.isPressedRaw())
     {
+        uint16_t tmp;
         lv_obj_t *msgbox_full;
         hal.canDeepSleep = false;
         vTaskDelay(100);
@@ -217,6 +217,7 @@ static void wf_clock_loop()
                 wf_class_load();
                 return;
             case 2:
+                //更新天气信息
                 msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC, "天气", "尝试获取天气", FULL_SCREEN_BG_SYNC);
                 if (weather.refresh(hal.conf.getString("city")) == 0)
                 {
@@ -232,6 +233,7 @@ static void wf_clock_loop()
                         vTaskDelay(10);
                     full_screen_msgbox(BIG_SYMBOL_CROSS, "天气", "天气信息获取失败", FULL_SCREEN_BG_CROSS);
                 }
+                break;
             case 3:
                 //设置
                 menu_create();
@@ -292,7 +294,17 @@ static void wf_clock_loop()
                         break;
                     case 2:
                         //时钟微调
-                        //TODO: 添加时钟微调功能
+                        full_screen_msgbox(BIG_SYMBOL_INFO, "RTC频率偏移", "提示：正值减小振荡器频率，负值增大振荡器频率", FULL_SCREEN_BG_INFO);
+                        tmp = hal.rtc.readOffset();
+                        tmp = msgbox_number("请输入偏移量", 3, 0, 127, -128, tmp);
+                        if(msgbox_yn("请确认是否保存"))
+                        {
+                            while(hal.rtc.readOffset() != tmp)
+                            {
+                                hal.rtc.writeOffset(tmp);
+                                vTaskDelay(10);
+                            }
+                        }
                         break;
                     default:
                         break;

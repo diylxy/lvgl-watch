@@ -1,6 +1,16 @@
 #ifndef __WATCH_FACE_H__
 #define __WATCH_FACE_H__
 
+//简单地加载表盘
+//注意，这个宏会自动调用REQUESTLV，删除旧屏幕并加载新屏幕
+//参数：wf_screen : 表盘的screen，将被初始化
+#define EASY_LOAD_WATCHFACE(wf_screen) \
+    REQUESTLV(); \
+    if (lv_scr_act()) \
+        lv_obj_del(lv_scr_act()); \
+    wf_screen = lv_obj_create(NULL); \
+    lv_scr_load(wf_screen)
+
 typedef void (* wfSetupFunc)(void);//表盘加载函数类型，加载函数，例如wf_*_load.
 
 /**
@@ -22,4 +32,6 @@ void wf_class_load(void);
 void wf_webserver_load(void);
 void wf_sysinfo_load();
 void wf_weather_load();
+void wf_hiddenfunc_load();
+void wf_flappy_bird_load();
 #endif
