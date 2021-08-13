@@ -49,13 +49,14 @@ int msgbox_number(const char *str, uint16_t digits, uint16_t dotat, int max, int
 
 //字体定义
 extern const lv_font_t lv_font_chinese_16;
-extern const lv_font_t icon_64px;
 extern const lv_font_t num_32px;
 extern const lv_font_t num_48px;
 extern const lv_font_t num_64px;
 extern const lv_font_t font_weather_32;//weather字体：有雹中晴扬大云雨特冰浓雪多冻霾雷夹重严尘无阵暴伴浮沙雾小强阴度
 extern const lv_font_t font_weather_num_24;//0123456789-/℃
+extern const lv_font_t font_weather_symbol_96;//0xf764,0xf773,0xf72e,0xf185,0xf070,0xf74f,0xf741,0xf763,0xf740,0xf73f,0xf73d,0xf0c2,0xf0e7,0xf2dc,0xf7cf
 //按顺序：0xf129,0xf00d, 0xf00c, 0xf128, 0xf023, 0xf0f3, 0xf021
+extern const lv_font_t icon_64px;
 #define BIG_SYMBOL_INFO "\xEF\x84\xA9"
 #define BIG_SYMBOL_CROSS "\xEF\x80\x8D"
 #define BIG_SYMBOL_CHECK "\xEF\x80\x8C"

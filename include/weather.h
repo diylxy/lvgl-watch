@@ -67,7 +67,7 @@ public:
     void save();
     int8_t refresh(String city);
     bool available(uint8_t date);
-    const lv_img_dsc_t *weatherNumtoImage(uint16_t num);
+    const char *weatherNumtoImage(uint16_t num);
     weatherInfo24H hour24[24];
     String cityName;
 };

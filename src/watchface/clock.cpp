@@ -1,7 +1,7 @@
 #include "A_config.h"
 
 static lv_obj_t *scr_clock;
-
+static lv_obj_t *bg;
 static lv_obj_t *bar1;
 static lv_obj_t *lblDate;
 static lv_obj_t *lblTime[6][2];
@@ -325,6 +325,14 @@ static void wf_clock_loop()
     if (hal.btnDown.isPressedRaw())
     {
         fromweather = true;
+        lv_anim_t a;
+        lv_anim_init(&a);
+        lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
+        lv_anim_set_var(&a, bg);
+        lv_anim_set_time(&a, 600);
+        lv_anim_set_values(&a, 108, 0);
+        lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_height);
+        lv_anim_start(&a);
         pushWatchFace(wf_clock_load);
         wf_weather_load();
         return;
@@ -345,20 +353,8 @@ void wf_clock_load(void)
     }
     REQUESTLV();
     scr_clock = lv_obj_create(NULL);
-    if (fromweather)
-    {
-        fromweather = false;
-        lv_scr_load_anim(scr_clock, LV_SCR_LOAD_ANIM_MOVE_TOP, 300, 0, true);
-    }
-    else
-    {
-        if (lv_scr_act())
-            lv_obj_del(lv_scr_act());
-        lv_scr_load(scr_clock);
-    }
-
     //背景
-    lv_obj_t *bg = lv_obj_create(scr_clock);
+    bg = lv_obj_create(scr_clock);
     lv_obj_set_style_border_width(bg, 0, 0);
     lv_obj_set_size(bg, 240, 108);
     lv_obj_set_pos(bg, 0, 0);
@@ -368,7 +364,20 @@ void wf_clock_load(void)
     lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
     lv_anim_set_var(&a, bg);
     lv_anim_set_time(&a, 600);
-    lv_anim_set_values(&a, 70, 108);
+    if (fromweather)
+    {
+        lv_anim_set_values(&a, 0, 108);
+        fromweather = false;
+        lv_scr_load_anim(scr_clock, LV_SCR_LOAD_ANIM_MOVE_TOP, 300, 0, true);
+    }
+    else
+    {
+        lv_anim_set_values(&a, 70, 108);
+        if (lv_scr_act())
+            lv_obj_del(lv_scr_act());
+        lv_scr_load(scr_clock);
+    }
+
     lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_height);
     lv_anim_start(&a);
     //课程进度条、倒计时

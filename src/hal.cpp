@@ -7,7 +7,7 @@ static Arduino_DataBus *bus = new Arduino_ESP32SPI_DMA(12, 5, 18, 23, -1, VSPI);
 static Arduino_TFT *gfx = new Arduino_GC9A01(bus, 33, 0 /* rotation */, true /* IPS */);
 
 static lv_disp_draw_buf_t disp_buf;
-static lv_color_t buf[DISPLAY_MAX_X * 30];
+static lv_color_t buf[DISPLAY_MAX_X * 40];
 static lv_disp_drv_t disp_drv;
 static lv_indev_drv_t indev_drv;
 static lv_disp_t *disp;
@@ -61,7 +61,7 @@ static void lvgl_begin()
 {
     lv_init();
 
-    lv_disp_draw_buf_init(&disp_buf, buf, NULL, DISPLAY_MAX_X * 30);
+    lv_disp_draw_buf_init(&disp_buf, buf, NULL, DISPLAY_MAX_X * 40);
 
     /*Initialize the display*/
     lv_disp_drv_init(&disp_drv);
