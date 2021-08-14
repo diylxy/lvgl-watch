@@ -128,7 +128,9 @@ static void wf_clock_loop()
             }
         }
         REQUESTLV();
-        lv_label_set_text_fmt(lblDate, "20%02d/%02d/%02d  %s", hal.rtc.getYear(), hal.rtc.getMonth(), hal.rtc.getDate(), week_name[week = hal.rtc.getDoW()]);
+        lv_label_set_text_fmt(lblDate, "20%02d/%02d/%02d  %s", hal.rtc.getYear(),
+                              hal.rtc.getMonth(), hal.rtc.getDate(),
+                              week_name[week = hal.rtc.getDoW()]);
         RELEASELV();
         p = hour * 60 + minute;
         if (curr_class != class_get_curr(week, p) || breakflag != class_get_next(week, p))
@@ -155,7 +157,10 @@ static void wf_clock_loop()
             }
             else
             {
-                dweek = next_class->week < week || (next_class->time_start <= p && next_class->week == week) ? next_class->week + 7 : next_class->week;
+                dweek = next_class->week < week ||
+                                (next_class->time_start <= p && next_class->week == week)
+                            ? next_class->week + 7
+                            : next_class->week;
                 dweek -= week;
                 maxval = remaining = dweek * 24 * 60 + next_class->time_start - p;
             }
@@ -191,7 +196,8 @@ static void wf_clock_loop()
         }
         REQUESTLV();
         lv_bar_set_value(bar1, map(remaining, maxval, 0, 0, 100), LV_ANIM_ON);
-        lv_label_set_text_fmt(lblRemaining, "%02d:%02d:%02d", remaining / 3600, remaining % 3600 / 60, remaining % 60);
+        lv_label_set_text_fmt(lblRemaining, "%02d:%02d:%02d",
+                              remaining / 3600, remaining % 3600 / 60, remaining % 60);
         RELEASELV();
     }
     hal.canDeepSleep = true;
@@ -218,20 +224,23 @@ static void wf_clock_loop()
                 return;
             case 2:
                 //更新天气信息
-                msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC, "天气", "尝试获取天气", FULL_SCREEN_BG_SYNC);
+                msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC,
+                                                        "天气", "尝试获取天气", FULL_SCREEN_BG_SYNC);
                 if (weather.refresh(hal.conf.getString("city")) == 0)
                 {
                     full_screen_msgbox_del(msgbox_full);
                     while (hal.btnEnter.isPressedRaw())
                         vTaskDelay(10);
-                    full_screen_msgbox(BIG_SYMBOL_CHECK, "天气", "成功获取当日天气信息", FULL_SCREEN_BG_CHECK);
+                    full_screen_msgbox(BIG_SYMBOL_CHECK, "天气",
+                                       "成功获取当日天气信息", FULL_SCREEN_BG_CHECK);
                 }
                 else
                 {
                     full_screen_msgbox_del(msgbox_full);
                     while (hal.btnEnter.isPressedRaw())
                         vTaskDelay(10);
-                    full_screen_msgbox(BIG_SYMBOL_CROSS, "天气", "天气信息获取失败", FULL_SCREEN_BG_CROSS);
+                    full_screen_msgbox(BIG_SYMBOL_CROSS, "天气", "天气信息获取失败 ",
+                                       FULL_SCREEN_BG_CROSS);
                 }
                 break;
             case 3:
@@ -245,22 +254,29 @@ static void wf_clock_loop()
                 {
                 case 1:
                     //WiFi Smartconfig
-                    full_screen_msgbox(BIG_SYMBOL_INFO, "WiFi Smartconfig", "请用手机下载ESPTouch应用，按提示操作，按下确定键开始", FULL_SCREEN_BG_INFO);
+                    full_screen_msgbox(BIG_SYMBOL_INFO, "WiFi Smartconfig",
+                                       "请用手机下载ESPTouch应用，按提示操作，按下确定键开始",
+                                       FULL_SCREEN_BG_INFO);
                     hal.DoNotSleep = true;
-                    msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC, "WiFi Smartconfig", "正在等待Smartconfig，长按确定键1s取消", FULL_SCREEN_BG_SYNC);
+                    msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC,
+                                                            "WiFi Smartconfig",
+                                                            "正在等待Smartconfig，长按确定键1s取消",
+                                                            FULL_SCREEN_BG_SYNC);
                     if (hal.beginSmartconfig())
                     {
                         full_screen_msgbox_del(msgbox_full);
                         while (hal.btnEnter.isPressedRaw())
                             vTaskDelay(10);
-                        full_screen_msgbox(BIG_SYMBOL_CHECK, "WiFi Smartconfig", "配网成功，已保存并自动断开连接", FULL_SCREEN_BG_CHECK);
+                        full_screen_msgbox(BIG_SYMBOL_CHECK, "WiFi Smartconfig",
+                                           "配网成功，已保存并自动断开连接", FULL_SCREEN_BG_CHECK);
                     }
                     else
                     {
                         full_screen_msgbox_del(msgbox_full);
                         while (hal.btnEnter.isPressedRaw())
                             vTaskDelay(10);
-                        full_screen_msgbox(BIG_SYMBOL_CROSS, "WiFi Smartconfig", "配网失败", FULL_SCREEN_BG_CROSS);
+                        full_screen_msgbox(BIG_SYMBOL_CROSS, "WiFi Smartconfig",
+                                           "配网失败", FULL_SCREEN_BG_CROSS);
                     }
                     hal.disconnectWiFi();
                     hal.DoNotSleep = false;
@@ -274,32 +290,39 @@ static void wf_clock_loop()
                     {
                     case 1:
                         //同步网络时间
-                        msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC, "时间同步", "正在与NTP服务器同步时间: " CONFIG_NTP_ADDR, FULL_SCREEN_BG_SYNC);
+                        msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC,
+                                                                "时间同步",
+                                                                "正在与NTP服务器同步时间: " CONFIG_NTP_ADDR,
+                                                                FULL_SCREEN_BG_SYNC);
                         hal.DoNotSleep = true;
                         if (hal.NTPSync())
                         {
                             full_screen_msgbox_del(msgbox_full);
                             while (hal.btnEnter.isPressedRaw())
                                 vTaskDelay(10);
-                            full_screen_msgbox(BIG_SYMBOL_CHECK, "时间同步", "同步成功!", FULL_SCREEN_BG_CHECK, 1000);
+                            full_screen_msgbox(BIG_SYMBOL_CHECK, "时间同步", "同步成功!",
+                                               FULL_SCREEN_BG_CHECK, 1000);
                         }
                         else
                         {
                             full_screen_msgbox_del(msgbox_full);
                             while (hal.btnEnter.isPressedRaw())
                                 vTaskDelay(10);
-                            full_screen_msgbox(BIG_SYMBOL_CROSS, "时间同步", "同步失败", FULL_SCREEN_BG_CROSS, 1000);
+                            full_screen_msgbox(BIG_SYMBOL_CROSS, "时间同步",
+                                               "同步失败", FULL_SCREEN_BG_CROSS, 1000);
                         }
                         hal.DoNotSleep = false;
                         break;
                     case 2:
                         //时钟微调
-                        full_screen_msgbox(BIG_SYMBOL_INFO, "RTC频率偏移", "提示：正值减小振荡器频率，负值增大振荡器频率", FULL_SCREEN_BG_INFO);
+                        full_screen_msgbox(BIG_SYMBOL_INFO, "RTC频率偏移",
+                                           "提示：正值减小振荡器频率，负值增大振荡器频率",
+                                           FULL_SCREEN_BG_INFO);
                         tmp = hal.rtc.readOffset();
                         tmp = msgbox_number("请输入偏移量", 3, 0, 127, -128, tmp);
-                        if(msgbox_yn("请确认是否保存"))
+                        if (msgbox_yn("请确认是否保存"))
                         {
-                            while(hal.rtc.readOffset() != tmp)
+                            while (hal.rtc.readOffset() != tmp)
                             {
                                 hal.rtc.writeOffset(tmp);
                                 vTaskDelay(10);
@@ -328,7 +351,24 @@ static void wf_clock_loop()
                 break;
             case 4:
                 //DEBUG专用
-                break;
+                {
+                    String str;
+                    uint16_t time = 10000;
+                    msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_INFO, "测试", "10秒内使用morse code输入字符");
+                    morse.enableAutoSpace = true;
+                    morse.start();
+                    while (1)
+                    {
+                        vTaskDelay(1);
+                        --time;
+                        if(time == 0)break;
+                    }
+                    morse.pause();
+                    full_screen_msgbox_del(msgbox_full);
+                    str = morse.getInput();
+                    full_screen_msgbox(BIG_SYMBOL_CHECK, "测试结果", str.c_str(), FULL_SCREEN_BG_CHECK);
+                    break;
+                }
             default:
                 break;
             }

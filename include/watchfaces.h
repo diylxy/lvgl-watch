@@ -34,4 +34,5 @@ void wf_sysinfo_load();
 void wf_weather_load();
 void wf_hiddenfunc_load();
 void wf_flappy_bird_load();
+void wf_terminal_load();
 #endif

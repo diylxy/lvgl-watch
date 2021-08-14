@@ -7,6 +7,38 @@ static int16_t selected = 0;
 static int16_t total = 0;
 
 static bool anim_ready_req = false;
+
+void lv_obj_push_down(lv_obj_t *obj, uint16_t distance,
+                      uint16_t time, uint16_t delay)
+{
+    lv_anim_t a;
+    uint16_t p;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, obj);
+    p = lv_obj_get_y(obj);
+    lv_anim_set_values(&a, p - distance, p);
+    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_y);
+    lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
+    lv_anim_set_time(&a, time);
+    lv_anim_set_delay(&a, delay);
+    lv_anim_start(&a);
+}
+
+void lv_obj_pop_up(lv_obj_t *obj, uint16_t distance,
+                   uint16_t time, uint16_t delay)
+{
+    lv_anim_t a;
+    uint16_t p;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, obj);
+    p = lv_obj_get_y(obj);
+    lv_anim_set_values(&a, p + distance, p);
+    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_y);
+    lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
+    lv_anim_set_time(&a, time);
+    lv_anim_set_delay(&a, delay);
+    lv_anim_start(&a);
+}
 static void opa_set(lv_obj_t *a, int32_t opa)
 {
     lv_obj_set_style_opa(a, opa, 0);
@@ -734,4 +766,27 @@ int msgbox_number(const char *str, uint16_t digits, uint16_t dotat, int max, int
     while (hal.btnEnter.isPressedRaw())
         vTaskDelay(50);
     return value_pre;
+}
+
+String msgbox_string(const char *msg, bool multiline)
+{
+    while (hal.btnEnter.isPressedRaw())
+        vTaskDelay(50);
+    REQUESTLV();
+    full_screen_msgbox(BIG_SYMBOL_INFO, "输入提示", "请按上键用摩斯密码输入文字，确认键弹出菜单，下键退格");
+    lv_obj_t *scr_msgbox = lv_obj_create(lv_layer_top());
+    lv_obj_set_size(scr_msgbox, 200, 126);
+    lv_obj_center(scr_msgbox);
+
+    lv_obj_t *lblInfo = lv_label_create(scr_msgbox);
+    lv_label_set_text(lblInfo, msg);
+    lv_label_set_long_mode(lblInfo, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_set_style_text_font(lblInfo, &lv_font_chinese_16, 0);
+    lv_obj_set_height(lblInfo, 16);
+    lv_obj_set_width(lblInfo, 180);
+    lv_obj_set_pos(lblInfo, 10, 0);
+
+    lv_obj_t *text = lv_textarea_create(scr_msgbox);
+    lv_obj_set_size(text, 180, 100);
+    lv_obj_set_pos(text, 10, 20);
 }

@@ -108,6 +108,7 @@ void setup()
         hiddenFunctions = true;
     }
     weather.begin();
+    morse.init();
     //电池图标
     lblBattery = lv_label_create(lv_layer_top());
     lv_label_set_text(lblBattery, LV_SYMBOL_BATTERY_EMPTY);

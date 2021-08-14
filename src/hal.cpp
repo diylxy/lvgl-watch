@@ -43,7 +43,7 @@ void loop(void)
     vTaskDelay(2);
 }
 /**
- * 表盘更新
+ * @brief 表盘更新
  */
 static void update_loop(void *param)
 {

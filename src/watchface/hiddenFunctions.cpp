@@ -6,20 +6,26 @@ static void wf_hiddenfunc_loop()
     if (hal.btnEnter.isPressedRaw())
     {
         menu_create();
-        menu_add("FlappyBird");
         menu_add("退出隐藏功能");
+        menu_add("FlappyBird");
+        menu_add("Keyboard");
         switch (menu_show(1))
         {
         case 1:
-            //FlappyBird
-            pushWatchFace(wf_hiddenfunc_load);
-            wf_flappy_bird_load();
-            break;
-        case 2:
             //退出隐藏功能
             hal.fLoop = NULL;
             wf_clock_load();
             return;
+            break;
+        case 2:
+            //FlappyBird
+            pushWatchFace(wf_hiddenfunc_load);
+            wf_flappy_bird_load();
+            break;
+        case 3:
+            //Keyboard
+            pushWatchFace(wf_hiddenfunc_load);
+            wf_terminal_load();
             break;
         default:
             break;
