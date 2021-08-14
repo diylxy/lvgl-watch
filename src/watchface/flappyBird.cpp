@@ -138,6 +138,7 @@ void bird_update(lv_timer_t *timer)
         lv_obj_set_style_opa(img_notice, 255, 0);
         lv_img_set_src(img_notice, &game_over);
         lv_timer_pause(flappy_bird_timer);
+        hal.motorAdd(MOTOR_RUN, 10);
         running = false;
     }
 }
