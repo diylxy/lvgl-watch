@@ -352,21 +352,7 @@ static void wf_clock_loop()
             case 4:
                 //DEBUG专用
                 {
-                    String str;
-                    uint16_t time = 10000;
-                    msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_INFO, "测试", "10秒内使用morse code输入字符");
-                    morse.enableAutoSpace = true;
-                    morse.start();
-                    while (1)
-                    {
-                        vTaskDelay(1);
-                        --time;
-                        if(time == 0)break;
-                    }
-                    morse.pause();
-                    full_screen_msgbox_del(msgbox_full);
-                    str = morse.getInput();
-                    full_screen_msgbox(BIG_SYMBOL_CHECK, "测试结果", str.c_str(), FULL_SCREEN_BG_CHECK);
+                    full_screen_msgbox(BIG_SYMBOL_CHECK, "测试结果", msgbox_string("测试Morse输入").c_str(), FULL_SCREEN_BG_CHECK);
                     break;
                 }
             default:

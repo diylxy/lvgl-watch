@@ -7,7 +7,40 @@ static int16_t selected = 0;
 static int16_t total = 0;
 
 static bool anim_ready_req = false;
-
+static const char special_chars[] = {
+    '-',
+    '\\',
+    '/',
+    '(',
+    ')',
+    '*',
+    '.',
+    ',',
+    '"',
+    '_',
+    '>',
+    '|',
+    '\'',
+    ':',
+    '<',
+    '+',
+    '=',
+    '?',
+    '@',
+    '#',
+    '$',
+    '%',
+    '^',
+    '&',
+    '{',
+    '}',
+    '[',
+    ']',
+    ';',
+    '?',
+    '~',
+    '`',
+    0};
 void lv_obj_push_down(lv_obj_t *obj, uint16_t distance,
                       uint16_t time, uint16_t delay)
 {
@@ -15,13 +48,14 @@ void lv_obj_push_down(lv_obj_t *obj, uint16_t distance,
     uint16_t p;
     lv_anim_init(&a);
     lv_anim_set_var(&a, obj);
-    p = lv_obj_get_y(obj);
+    p = lv_obj_get_style_y(obj, 0);
     lv_anim_set_values(&a, p - distance, p);
     lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_y);
     lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
     lv_anim_set_time(&a, time);
     lv_anim_set_delay(&a, delay);
     lv_anim_start(&a);
+    lv_obj_fade_in(obj, time, delay);
 }
 
 void lv_obj_pop_up(lv_obj_t *obj, uint16_t distance,
@@ -31,13 +65,14 @@ void lv_obj_pop_up(lv_obj_t *obj, uint16_t distance,
     uint16_t p;
     lv_anim_init(&a);
     lv_anim_set_var(&a, obj);
-    p = lv_obj_get_y(obj);
+    p = lv_obj_get_style_y(obj, 0);
     lv_anim_set_values(&a, p + distance, p);
     lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_y);
     lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
     lv_anim_set_time(&a, time);
     lv_anim_set_delay(&a, delay);
     lv_anim_start(&a);
+    lv_obj_fade_in(obj, time, delay);
 }
 static void opa_set(lv_obj_t *a, int32_t opa)
 {
@@ -268,7 +303,7 @@ void msgbox(const char *prompt, const char *msg, uint32_t auto_back)
     lv_obj_t *mbox1 = lv_msgbox_create(lv_scr_act(), prompt, msg, NULL, false);
     lv_obj_set_style_text_font(mbox1, &lv_font_chinese_16, 0);
     lv_obj_center(mbox1);
-    lv_obj_fade_in(mbox1, 200, 0);
+    lv_obj_pop_up(mbox1);
     RELEASELV();
     last_millis = millis();
     while (1)
@@ -317,7 +352,8 @@ lv_obj_t *label(const char *str, uint16_t x, uint16_t y, bool animation, uint16_
     return label1;
 }
 
-lv_obj_t *full_screen_msgbox_create(const char *icon, const char *title, const char *str, lv_color_t bg_color)
+lv_obj_t *full_screen_msgbox_create(const char *icon, const char *title,
+                                    const char *str, lv_color_t bg_color)
 {
     REQUESTLV();
     lv_obj_t *msgbox_container = lv_obj_create(lv_scr_act());
@@ -414,7 +450,9 @@ void full_screen_msgbox_wait_del(lv_obj_t *mbox, uint32_t auto_back)
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }
-void full_screen_msgbox(const char *icon, const char *title, const char *str, lv_color_t bg_color, uint32_t auto_back)
+void full_screen_msgbox(const char *icon, const char *title,
+                        const char *str, lv_color_t bg_color,
+                        uint32_t auto_back)
 {
     full_screen_msgbox_wait_del(full_screen_msgbox_create(icon, title, str, bg_color), auto_back);
 }
@@ -585,6 +623,7 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
     curr_scr = lv_scr_act();
     lv_obj_t *scr = lv_obj_create(lv_layer_top());
     lv_obj_set_size(scr, 130, 88);
+    lv_obj_set_pos(scr, 0, 0);
     lv_obj_center(scr);
     spinbox = lv_spinbox_create(scr);
     lv_spinbox_set_range(spinbox, 0, 2359);
@@ -604,7 +643,7 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
     lv_label_set_long_mode(lbl, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_align(lbl, LV_ALIGN_CENTER, 0, -20);
 
-    lv_obj_fade_in(scr, 300, 0);
+    lv_obj_pop_up(scr);
     RELEASELV();
     while (1)
     {
@@ -692,7 +731,8 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
     return spinbox_val;
 }
 
-int msgbox_number(const char *str, uint16_t digits, uint16_t dotat, int max, int min, int value_pre)
+int msgbox_number(const char *str, uint16_t digits, uint16_t dotat,
+                  int max, int min, int value_pre)
 {
     lv_obj_t *spinbox = NULL;
     uint8_t pos = 0;
@@ -702,6 +742,7 @@ int msgbox_number(const char *str, uint16_t digits, uint16_t dotat, int max, int
     curr_scr = lv_scr_act();
     lv_obj_t *scr = lv_obj_create(lv_layer_top());
     lv_obj_set_size(scr, 130, 88);
+    lv_obj_set_pos(scr, 0, 0);
     lv_obj_center(scr);
     spinbox = lv_spinbox_create(scr);
     lv_spinbox_set_range(spinbox, min, max);
@@ -723,7 +764,7 @@ int msgbox_number(const char *str, uint16_t digits, uint16_t dotat, int max, int
     lv_label_set_long_mode(lbl, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_align(lbl, LV_ALIGN_CENTER, 0, -20);
 
-    lv_obj_fade_in(scr, 300, 0);
+    lv_obj_pop_up(scr);
     RELEASELV();
     while (1)
     {
@@ -770,6 +811,8 @@ int msgbox_number(const char *str, uint16_t digits, uint16_t dotat, int max, int
 
 String msgbox_string(const char *msg, bool multiline)
 {
+    String res = "";
+    char c;
     while (hal.btnEnter.isPressedRaw())
         vTaskDelay(50);
     REQUESTLV();
@@ -777,16 +820,82 @@ String msgbox_string(const char *msg, bool multiline)
     lv_obj_t *scr_msgbox = lv_obj_create(lv_layer_top());
     lv_obj_set_size(scr_msgbox, 200, 126);
     lv_obj_center(scr_msgbox);
-
+    lv_obj_set_pos(scr_msgbox, 0, 0);
+    lv_obj_pop_up(scr_msgbox, 20, 300, 0);
+    lv_obj_set_style_pad_all(scr_msgbox, 0, 0);
     lv_obj_t *lblInfo = lv_label_create(scr_msgbox);
     lv_label_set_text(lblInfo, msg);
     lv_label_set_long_mode(lblInfo, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_set_style_text_font(lblInfo, &lv_font_chinese_16, 0);
-    lv_obj_set_height(lblInfo, 16);
+    lv_obj_set_height(lblInfo, 22);
     lv_obj_set_width(lblInfo, 180);
     lv_obj_set_pos(lblInfo, 10, 0);
+    lv_obj_set_style_text_align(lblInfo, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_pad_all(lblInfo, 0, 0);
 
     lv_obj_t *text = lv_textarea_create(scr_msgbox);
     lv_obj_set_size(text, 180, 100);
     lv_obj_set_pos(text, 10, 20);
+    lv_obj_add_state(text, LV_STATE_FOCUSED);
+    RELEASELV();
+    morse.start();
+    while (1)
+    {
+        if (morse.available())
+        {
+            c = morse.getChar();
+            if (c == '\n' && multiline == false)
+                break;
+            res += c;
+            lv_textarea_set_text(text, res.c_str());
+        }
+        if (hal.btnEnter.isPressedRaw())
+        {
+            morse.pause();
+            uint8_t i = 0;
+            REQUESTLV();
+            lv_obj_fade_out(scr_msgbox, 300, 0);
+            RELEASELV();
+            menu_create();
+            menu_add(LV_SYMBOL_EDIT " 结束输入");
+            while (special_chars[i] != 0)
+            {
+                menu_add(String(special_chars[i]).c_str());
+                ++i;
+            }
+            i = menu_show();
+            if (i == 1)
+            {
+                break;
+            }
+            else if (i)
+            {
+                res += special_chars[i-2];
+                lv_textarea_set_text(text, res.c_str());
+            }
+            REQUESTLV();
+            lv_obj_fade_in(scr_msgbox, 300, 0);
+            RELEASELV();
+            morse.resume();
+        }
+        if (hal.btnDown.isPressedRaw())
+        {
+            res = res.substring(0, res.length() - 1);
+            lv_textarea_set_text(text, res.c_str());
+            vTaskDelay(500);
+        }
+        vTaskDelay(50);
+    }
+    morse.pause();
+    REQUESTLV();
+    lv_obj_fade_out(scr_msgbox, 250, 0);
+    RELEASELV();
+    vTaskDelay(300);
+    REQUESTLV();
+    lv_obj_del(scr_msgbox);
+    RELEASELV();
+    while (hal.btnEnter.isPressedRaw())
+        vTaskDelay(50);
+
+    return res;
 }

@@ -100,7 +100,7 @@ void Morse::update()
             chrPointer = 0;
             return;
         }
-        else if (releaseTime == LONG_TIME && enableAutoSpace && flagSpace)
+        else if (releaseTime == LONG_TIME * 3 && enableAutoSpace && flagSpace)
         {
             flagSpace = false;
             insertChr(' ');

@@ -8,8 +8,8 @@
  * @param time 动画持续时长
  * @param delay 动画开始前延时
  */
-void lv_obj_push_down(lv_obj_t *obj, uint16_t distance,
-                      uint16_t time, uint16_t delay);
+void lv_obj_push_down(lv_obj_t *obj, uint16_t distance = 24,
+                      uint16_t time = 300, uint16_t delay = 0);
 
 /**
  * @brief 向上弹出动画
@@ -18,8 +18,8 @@ void lv_obj_push_down(lv_obj_t *obj, uint16_t distance,
  * @param time 动画持续时长
  * @param delay 动画开始前延时
  */
-void lv_obj_pop_up(lv_obj_t *obj, uint16_t distance,
-                   uint16_t time, uint16_t delay);
+void lv_obj_pop_up(lv_obj_t *obj, uint16_t distance = 24,
+                   uint16_t time = 300, uint16_t delay = 0);
 
 /**
  * @brief 创建并初始化菜单控件，清空菜单数组，但是不会立刻显示菜单。创建菜单第一步
@@ -137,6 +137,14 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre = 0);
 int msgbox_number(const char *str, uint16_t digits,
                   uint16_t dotat, int max,
                   int min, int value_pre);
+/**
+ * @brief morse文字输入框，支持特殊字符
+ * @param msg 提示字符串
+ * @param multiline 允许多行
+ * @return 输入的字符串
+ */
+String msgbox_string(const char *msg, bool multiline=false);
+
 
 //字体定义
 extern const lv_font_t lv_font_chinese_16;
