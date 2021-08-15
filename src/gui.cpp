@@ -74,6 +74,29 @@ void lv_obj_pop_up(lv_obj_t *obj, uint16_t distance,
     lv_anim_start(&a);
     lv_obj_fade_in(obj, time, delay);
 }
+void lv_obj_fall_down(lv_obj_t *obj, uint16_t distance,
+                      uint16_t time, uint16_t delay)
+{
+    lv_anim_t a;
+    uint16_t p;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, obj);
+    p = lv_obj_get_style_y(obj, 0);
+    lv_anim_set_values(&a, p, p - distance / 4);
+    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_y);
+    lv_anim_set_path_cb(&a, lv_anim_path_ease_out);
+    lv_anim_set_time(&a, time / 5 * 2);
+    lv_anim_set_delay(&a, delay);
+    lv_anim_start(&a);
+
+    lv_anim_set_values(&a, p - distance / 4, p + distance);
+    lv_anim_set_path_cb(&a, lv_anim_path_ease_in);
+    lv_anim_set_time(&a, time / 5 * 3);
+    lv_anim_set_delay(&a, delay + time / 5 * 2);
+    lv_anim_start(&a);
+    lv_obj_fade_out(obj, time, delay);
+}
+
 static void opa_set(lv_obj_t *a, int32_t opa)
 {
     lv_obj_set_style_opa(a, opa, 0);
@@ -310,19 +333,10 @@ void msgbox(const char *prompt, const char *msg, uint32_t auto_back)
     {
         if (hal.btnEnter.isPressedRaw() || (auto_back && millis() - last_millis > auto_back))
         {
-            lv_anim_t a;
             REQUESTLV();
-            lv_anim_init(&a);
-            lv_anim_set_var(&a, mbox1);
-            lv_anim_set_values(&a, LV_OPA_COVER, LV_OPA_TRANSP);
-            lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)opa_set);
-            lv_anim_set_time(&a, 200);
-            lv_anim_set_ready_cb(&a, anim_ready_cb);
-            lv_anim_start(&a);
-            anim_ready_req = true;
+            lv_obj_fall_down(mbox1);
             RELEASELV();
-            while (anim_ready_req)
-                vTaskDelay(40 / portTICK_PERIOD_MS);
+            vTaskDelay(300 / portTICK_PERIOD_MS);
             REQUESTLV();
             lv_obj_del(mbox1);
             RELEASELV();
@@ -411,6 +425,8 @@ lv_obj_t *full_screen_msgbox_create(const char *icon, const char *title,
     lv_anim_start(&a);
 
     lv_obj_fade_in(msgbox_container, 300, 0);
+    lv_obj_push_down(lbltitle);
+    lv_obj_pop_up(lblstr);
     RELEASELV();
     return msgbox_container;
 }
@@ -720,7 +736,7 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre)
         vTaskDelay(50);
     }
     REQUESTLV();
-    lv_obj_fade_out(scr, 250, 0);
+    lv_obj_fall_down(scr);
     RELEASELV();
     vTaskDelay(300);
     REQUESTLV();
@@ -798,7 +814,7 @@ int msgbox_number(const char *str, uint16_t digits, uint16_t dotat,
     }
     value_pre = lv_spinbox_get_value(spinbox);
     REQUESTLV();
-    lv_obj_fade_out(scr, 250, 0);
+    lv_obj_fall_down(scr);
     RELEASELV();
     vTaskDelay(300);
     REQUESTLV();
@@ -870,7 +886,7 @@ String msgbox_string(const char *msg, bool multiline)
             }
             else if (i)
             {
-                res += special_chars[i-2];
+                res += special_chars[i - 2];
                 lv_textarea_set_text(text, res.c_str());
             }
             REQUESTLV();
@@ -888,7 +904,7 @@ String msgbox_string(const char *msg, bool multiline)
     }
     morse.pause();
     REQUESTLV();
-    lv_obj_fade_out(scr_msgbox, 250, 0);
+    lv_obj_fall_down(scr_msgbox);
     RELEASELV();
     vTaskDelay(300);
     REQUESTLV();

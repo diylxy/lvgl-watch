@@ -22,6 +22,16 @@ void lv_obj_pop_up(lv_obj_t *obj, uint16_t distance = 24,
                    uint16_t time = 300, uint16_t delay = 0);
 
 /**
+ * @brief 向上弹出动画，但是路径反过来
+ * @param obj lvgl对象指针
+ * @param distance 动画移动距离
+ * @param time 动画持续时长
+ * @param delay 动画开始前延时
+ */
+void lv_obj_fall_down(lv_obj_t *obj, uint16_t distance = 24,
+                      uint16_t time = 300, uint16_t delay = 0);
+
+/**
  * @brief 创建并初始化菜单控件，清空菜单数组，但是不会立刻显示菜单。创建菜单第一步
  */
 void menu_create(void);

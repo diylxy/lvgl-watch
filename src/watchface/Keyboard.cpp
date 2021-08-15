@@ -32,6 +32,11 @@ static void wf_terminal_loop()
         lv_btnmatrix_set_btn_ctrl(btnm_keyboard_main, selected, LV_BTNMATRIX_CTRL_DISABLED);
         RELEASELV();
         hal.motorAdd(MOTOR_RUN, 5);
+        while (hal.btnEnter.isPressedRaw())
+        {
+            vTaskDelay(20);
+        }
+        vTaskDelay(20);
         if (bleKeyboard.isConnected() || selected == 0)
         {
             switch (selected)
@@ -46,8 +51,7 @@ static void wf_terminal_loop()
                     hal.DoNotSleep = false;
                     btStop();
                     popWatchFace();
-                    break;
-                
+                    return;
                 default:
                     break;
                 }
@@ -55,19 +59,74 @@ static void wf_terminal_loop()
             case 1:
                 //CMD
                 cmdtmp = msgbox_string("请输入命令");
-                bleKeyboard.press(KEY_LEFT_GUI);
-                bleKeyboard.press('r');
-                vTaskDelay(100);
-                bleKeyboard.releaseAll();
-                vTaskDelay(500);
-                bleKeyboard.println(cmdtmp);
+                do
+                {
+                    bleKeyboard.press(KEY_LEFT_GUI);
+                    bleKeyboard.press('r');
+                    vTaskDelay(100);
+                    bleKeyboard.releaseAll();
+                    vTaskDelay(300);
+                    bleKeyboard.println(cmdtmp);
+                } while (msgbox_yn("是否重复执行？"));
+                break;
+            case 2:
+            //锁定
+                    bleKeyboard.press(KEY_LEFT_GUI);
+                    bleKeyboard.press('l');
+                    vTaskDelay(100);
+                    bleKeyboard.releaseAll();
+                    break;
+            case 3:
+            //桌面
+                    bleKeyboard.press(KEY_LEFT_GUI);
+                    bleKeyboard.press('d');
+                    vTaskDelay(100);
+                    bleKeyboard.releaseAll();
+                    break;
+            case 4:
+            //Alt+F4
+                    bleKeyboard.press(KEY_LEFT_ALT);
+                    bleKeyboard.press(KEY_F4);
+                    vTaskDelay(100);
+                    bleKeyboard.releaseAll();
+                    break;
+            case 5:
+            //Alt+Tab
+                    bleKeyboard.press(KEY_LEFT_ALT);
+                    bleKeyboard.press(KEY_TAB);
+                    vTaskDelay(100);
+                    bleKeyboard.releaseAll();
+                    break;
+            case 6:
+            //截图
+                    bleKeyboard.press(KEY_LEFT_GUI);
+                    bleKeyboard.press(KEY_LEFT_SHIFT);
+                    bleKeyboard.press('s');
+                    vTaskDelay(100);
+                    bleKeyboard.releaseAll();
+                    break;
+            case 7:
+            //保存
+                    bleKeyboard.press(KEY_LEFT_CTRL);
+                    bleKeyboard.press('s');
+                    vTaskDelay(100);
+                    bleKeyboard.releaseAll();
+                    break;
+            case 8:
+            //Ctrl+Alt+Del
+                    bleKeyboard.press(KEY_LEFT_CTRL);
+                    bleKeyboard.press(KEY_LEFT_ALT);
+                    bleKeyboard.press(KEY_DELETE);
+                    vTaskDelay(100);
+                    bleKeyboard.releaseAll();
+                    break;
             default:
                 break;
             }
         }
         else
         {
-            msgbox("提示", "未连接蓝牙");
+            msgbox("提示", "未连接");
         }
         vTaskDelay(300);
         REQUESTLV();
