@@ -41,8 +41,9 @@ static const char special_chars[] = {
     '~',
     '`',
     0};
+
 void lv_obj_push_down(lv_obj_t *obj, uint16_t distance,
-                      uint16_t time, uint16_t delay)
+                      uint16_t time, uint16_t waitBeforeStart)
 {
     lv_anim_t a;
     uint16_t p;
@@ -53,13 +54,13 @@ void lv_obj_push_down(lv_obj_t *obj, uint16_t distance,
     lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_y);
     lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
     lv_anim_set_time(&a, time);
-    lv_anim_set_delay(&a, delay);
+    lv_anim_set_delay(&a, waitBeforeStart);
     lv_anim_start(&a);
-    lv_obj_fade_in(obj, time, delay);
+    lv_obj_fade_in(obj, time, waitBeforeStart);
 }
 
 void lv_obj_pop_up(lv_obj_t *obj, uint16_t distance,
-                   uint16_t time, uint16_t delay)
+                   uint16_t time, uint16_t waitBeforeStart)
 {
     lv_anim_t a;
     uint16_t p;
@@ -70,12 +71,13 @@ void lv_obj_pop_up(lv_obj_t *obj, uint16_t distance,
     lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_y);
     lv_anim_set_path_cb(&a, lv_anim_path_overshoot);
     lv_anim_set_time(&a, time);
-    lv_anim_set_delay(&a, delay);
+    lv_anim_set_delay(&a, waitBeforeStart);
     lv_anim_start(&a);
-    lv_obj_fade_in(obj, time, delay);
+    lv_obj_fade_in(obj, time, waitBeforeStart);
 }
+
 void lv_obj_fall_down(lv_obj_t *obj, uint16_t distance,
-                      uint16_t time, uint16_t delay)
+                      uint16_t time, uint16_t waitBeforeStart)
 {
     lv_anim_t a;
     uint16_t p;
@@ -86,15 +88,35 @@ void lv_obj_fall_down(lv_obj_t *obj, uint16_t distance,
     lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_y);
     lv_anim_set_path_cb(&a, lv_anim_path_ease_out);
     lv_anim_set_time(&a, time / 5 * 2);
-    lv_anim_set_delay(&a, delay);
+    lv_anim_set_delay(&a, waitBeforeStart);
     lv_anim_start(&a);
 
     lv_anim_set_values(&a, p - distance / 4, p + distance);
     lv_anim_set_path_cb(&a, lv_anim_path_ease_in);
     lv_anim_set_time(&a, time / 5 * 3);
-    lv_anim_set_delay(&a, delay + time / 5 * 2);
+    lv_anim_set_delay(&a, waitBeforeStart + time / 5 * 2);
     lv_anim_start(&a);
-    lv_obj_fade_out(obj, time, delay);
+    lv_obj_fade_out(obj, time, waitBeforeStart);
+}
+
+void lv_obj_floating_add(lv_obj_t *obj, uint16_t waitBeforeStart)
+{
+    lv_anim_t a;
+    uint16_t p;
+
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, obj);
+    lv_anim_set_path_cb(&a, lv_anim_path_ease_in_out);
+    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_obj_set_y);
+    lv_anim_set_time(&a, GUI_ANIM_FLOATING_TIME);
+    lv_anim_set_delay(&a, waitBeforeStart);
+    lv_anim_set_playback_time(&a, GUI_ANIM_FLOATING_TIME);
+    lv_anim_set_playback_delay(&a, GUI_ANIM_FLOATING_TIME);
+    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+
+    p = lv_obj_get_style_y(obj, 0);
+    lv_anim_set_values(&a, p, p + GUI_ANIM_FLOATING_RANGE);
+    lv_anim_start(&a);
 }
 
 static void opa_set(lv_obj_t *a, int32_t opa)
@@ -110,10 +132,12 @@ static void opa_set(lv_obj_t *a, int32_t opa)
     }
     */
 }
+
 static void anim_ready_cb(lv_anim_t *a)
 {
     anim_ready_req = false;
 }
+
 static void scroll_event_cb(lv_event_t *e)
 {
     lv_area_t cont_a;
@@ -425,8 +449,7 @@ lv_obj_t *full_screen_msgbox_create(const char *icon, const char *title,
     lv_anim_start(&a);
 
     lv_obj_fade_in(msgbox_container, 300, 0);
-    lv_obj_push_down(lbltitle);
-    lv_obj_pop_up(lblstr);
+    lv_obj_floating_add(lblicon, 1000);
     RELEASELV();
     return msgbox_container;
 }
@@ -466,12 +489,14 @@ void full_screen_msgbox_wait_del(lv_obj_t *mbox, uint32_t auto_back)
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }
+
 void full_screen_msgbox(const char *icon, const char *title,
                         const char *str, lv_color_t bg_color,
                         uint32_t auto_back)
 {
     full_screen_msgbox_wait_del(full_screen_msgbox_create(icon, title, str, bg_color), auto_back);
 }
+
 void countdown(void)
 {
     uint8_t start_sec = hal.rtc.getSecond();
