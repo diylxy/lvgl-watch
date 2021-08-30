@@ -26,6 +26,7 @@ void pushWatchFace(wfSetupFunc setup);
  * 此函数执行完后新表盘scr已被加载，所以不要进行lvgl操作，尽快返回
  */
 void popWatchFace();
+void wf_clock_anim_set(lv_obj_t *label[2], uint16_t y, uint16_t delaytime);
 
 void wf_clock_load(void);
 void wf_class_load(void);
@@ -35,4 +36,5 @@ void wf_weather_load();
 void wf_hiddenfunc_load();
 void wf_flappy_bird_load();
 void wf_terminal_load();
+void wf_bilibili_load();
 #endif

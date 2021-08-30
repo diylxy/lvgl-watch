@@ -22,7 +22,7 @@ static uint16_t label_y[6];
 static uint32_t remaining;
 static bool noanimfirst = true;  //第一次不显示课程更新动画
 static bool fromweather = false; //刚才的表盘是天气信息，如果为true，那么在load中会使用滑动动画
-static void wf_clock_anim_set(lv_obj_t *label[2], uint16_t y, uint16_t delaytime)
+void wf_clock_anim_set(lv_obj_t *label[2], uint16_t y, uint16_t delaytime)
 {
     lv_anim_t a;
     lv_anim_init(&a);
@@ -352,7 +352,8 @@ static void wf_clock_loop()
             case 4:
                 //DEBUG专用
                 {
-                    full_screen_msgbox(BIG_SYMBOL_CHECK, "测试结果", msgbox_string("测试Morse输入").c_str(), FULL_SCREEN_BG_CHECK);
+                    pushWatchFace(wf_clock_load);
+                    wf_bilibili_load();
                     break;
                 }
             default:
