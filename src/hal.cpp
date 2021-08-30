@@ -207,6 +207,11 @@ void Watch_HAL::deepSleep()
 
 void Watch_HAL::motor_update()
 {
+    if(strcmp(hal.conf.getValue("enmotor"), "0") == 0)
+    {
+        motor_seq_tail = motor_seq_head;
+        return;
+    }
     if (motor_seq_tail != motor_seq_head)
     {
         if (motor_playing == false)

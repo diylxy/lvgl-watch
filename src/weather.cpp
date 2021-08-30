@@ -65,12 +65,10 @@ int8_t Weather::refresh(String cityName)
     {
         Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
         http.end();
-        hal.disconnectWiFi();
         hal.DoNotSleep = false;
         return -3;
     }
     http.end();
-    hal.disconnectWiFi();
     hal.DoNotSleep = false;
     started = true;
     save();

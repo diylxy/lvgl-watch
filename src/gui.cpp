@@ -346,8 +346,10 @@ void menu_slide(int8_t direction)
 void msgbox(const char *prompt, const char *msg, uint32_t auto_back)
 {
     uint32_t last_millis;
+    while (hal.btnEnter.isPressedRaw())
+        vTaskDelay(10);
     REQUESTLV();
-    lv_obj_t *mbox1 = lv_msgbox_create(lv_scr_act(), prompt, msg, NULL, false);
+    lv_obj_t *mbox1 = lv_msgbox_create(lv_layer_top(), prompt, msg, NULL, false);
     lv_obj_set_style_text_font(mbox1, &lv_font_chinese_16, 0);
     lv_obj_center(mbox1);
     lv_obj_pop_up(mbox1);

@@ -26,6 +26,9 @@
 
 #include "A_config.h"
 #include <rom/rtc.h>
+#include "EEPROM.h"
+#define EEPROM_SIZE 64
+
 Watch_HAL hal;
 static uint32_t last_millis = 0;
 static lv_obj_t *lblBattery;
@@ -98,7 +101,13 @@ void setup()
     Serial.begin(115200);
     if (!SPIFFS.begin(true))
     {
-        Serial.println("无法挂载SPIFFS，对于这个项目，绝对不可能执行到这里");
+        Serial.println("无法挂载SPIFFS，对于这个项目，绝对不可能执行到这里，但是写一下以防万一谁拿去二次开发了呢");
+        while (1)
+            delay(10);
+    }
+    if (!EEPROM.begin(EEPROM_SIZE))
+    {
+        Serial.println("初始化EEPROM失败，请检查NVS存储区是否已满");
         while (1)
             delay(10);
     }
@@ -126,6 +135,27 @@ void setup()
         alarm_erase();
     }
     alarm_sort();
+    if (EEPROM.read(0) != hal.rtc.getDate())
+    {
+        //这里是需要每日更新的内容，比如天气，会在当天首次DEEPSLEEP唤醒时或复位时更新
+        if (strcmp(hal.conf.getValue("updated"), "1") == 0)
+        {
+            uint8_t b = hal.Brightness;
+            hal.motorAdd(MOTOR_RUN, 50);
+            hal.setBrightness(20);
+            Serial.println("Connecting...");
+            if (hal.connectWiFi())
+            {
+                weather.refresh(hal.conf.getString("city"));
+                hal.NTPSync();
+                hal.disconnectWiFi();
+            }
+            hal.setBrightness(b);
+            hal.motorAdd(MOTOR_RUN, 50);
+        }
+        EEPROM.write(0, hal.rtc.getDate());
+        EEPROM.commit();
+    }
 
     if (rtc_get_reset_reason(0) != DEEPSLEEP_RESET && rtc_get_reset_reason(1) != DEEPSLEEP_RESET)
     {

@@ -242,12 +242,16 @@ static void wf_clock_loop()
                     full_screen_msgbox(BIG_SYMBOL_CROSS, "天气", "天气信息获取失败 ",
                                        FULL_SCREEN_BG_CROSS);
                 }
+                hal.disconnectWiFi();
                 break;
             case 3:
                 //设置
                 menu_create();
                 menu_add(LV_SYMBOL_WIFI " WiFi Smartconfig");
                 menu_add(LV_SYMBOL_PLUS " 时间设置");
+                menu_add(LV_SYMBOL_TRASH " 清除B站登录信息");
+                menu_add(LV_SYMBOL_BELL " 允许振动");
+                menu_add(LV_SYMBOL_REFRESH " 允许日更信息");
                 menu_add(LV_SYMBOL_FILE " 启动HTTP服务器");
                 menu_add("系统信息");
                 switch (menu_show())
@@ -334,12 +338,41 @@ static void wf_clock_loop()
                     }
                     break;
                 case 3:
+                    //清除B站登录信息
+                    msgbox_yn("是否清除B站登录信息？");
+                    msgbox("失败？", ("需要管理员权限，请看clock.cpp line" + String(__LINE__)).c_str());       //提示：为了防止误删，需要在隐藏功能页面清除
+                    break;
+                case 4:
+                    //允许振动
+                    if(msgbox_yn("是否允许振动电机工作\n"))
+                    {
+                        hal.conf.setValue("enmotor", "1");
+                    }
+                    else
+                    {
+                        hal.conf.setValue("enmotor", "0");
+                    }
+                    hal.conf.writeConfig();
+                    break;
+                case 5:
+                    //允许日更信息
+                    if(msgbox_yn("是否允许在每天首次唤醒时自动更新信息"))
+                    {
+                        hal.conf.setValue("updated", "1");
+                    }
+                    else
+                    {
+                        hal.conf.setValue("updated", "0");
+                    }
+                    hal.conf.writeConfig();
+                    break;
+                case 6:
                     //启动HTTP服务器
                     pushWatchFace(wf_clock_load);
                     wf_webserver_load();
                     return;
                     break;
-                case 4:
+                case 7:
                     //系统信息
                     pushWatchFace(wf_clock_load);
                     wf_sysinfo_load();
