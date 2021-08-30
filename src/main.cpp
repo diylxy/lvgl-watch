@@ -56,7 +56,7 @@ static void light_sleep_loop(void *param)
         }
         if (millis() - hal.release_time > hal.autoSleepTime)
         {
-            if (hal.canDeepSleep)
+            if (hal.canDeepSleep && hal.canDeepSleepFromAlarm)
             {
                 hal.deepSleep();
             }

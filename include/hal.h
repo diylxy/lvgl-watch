@@ -43,9 +43,10 @@ public:
     TaskHandle_t handleScreenUpdate;
     volatile uint32_t release_time = 0;
     uint16_t autoSleepTime = 5000;
-    volatile bool DoNotSleep = false;
+    volatile bool DoNotSleep = false;//禁止进入任何睡眠模式
     volatile bool RTCInterrupted = false;
-    volatile bool canDeepSleep = false;
+    volatile bool canDeepSleep = false;//是否允许深度睡眠(1/2)，如果现在在时钟界面则允许。暂时禁止睡眠模式应置位DoNotSleep
+    volatile bool canDeepSleepFromAlarm = false;//是否允许深度睡眠(2/2)，如果今天没有闹钟则允许。暂时禁止睡眠模式应置位DoNotSleep
     volatile bool enableAnimation = false;
 private:
     struct motor_seq

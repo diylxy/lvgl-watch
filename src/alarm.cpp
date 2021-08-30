@@ -227,6 +227,8 @@ void alarm_update()
     alarm_t *a = alarm_get_next(week, now_min);
     if (a == NULL)
     {
+        //今天到周末没有任何闹钟
+        hal.canDeepSleepFromAlarm = true;
         a = alarm_get_next(1, 0);
         if (a == NULL)
             hal.rtc.turnOffAlarm(1);
@@ -265,6 +267,14 @@ void alarm_update()
         hal.rtc.turnOnAlarm(1);
         hal.rtc.setA1Time(a->week, t / 60, t % 60, t1, 0, true, false, false);
         current_alarm = a;
+        if(a->week == week)
+        {
+            hal.canDeepSleepFromAlarm = false;
+        }
+        else
+        {
+            hal.canDeepSleepFromAlarm = true;
+        }
     }
 }
 /**
