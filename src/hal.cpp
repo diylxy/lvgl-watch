@@ -284,6 +284,8 @@ bool Watch_HAL::beginSmartconfig()
             return false;
         }
     }
+    conf.setValue("ssid", WiFi.SSID());
+    conf.setValue("pwd", WiFi.psk());
     return true;
 }
 
@@ -293,7 +295,7 @@ bool Watch_HAL::connectWiFi()
     bool donotsleepstatus = DoNotSleep;
     DoNotSleep = true;
     WiFi.mode(WIFI_STA);
-    WiFi.begin();
+    WiFi.begin(conf.getValue("ssid"), conf.getValue("pwd"));
     while (WiFi.status() != WL_CONNECTED)
     {
         vTaskDelay(500);
