@@ -112,6 +112,7 @@ void setup()
             delay(10);
     }
     hal.begin();
+    hal.canDeepSleepFromAlarm = true;
     if (hal.btnDown.isPressedRaw() && hal.btnEnter.isPressedRaw() && !hal.btnUp.isPressedRaw())
     {
         hiddenFunctions = true;
