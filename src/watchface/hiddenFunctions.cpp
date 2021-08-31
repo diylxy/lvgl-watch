@@ -9,6 +9,7 @@ static void wf_hiddenfunc_loop()
         menu_add("退出隐藏功能");
         menu_add("FlappyBird");
         menu_add("Keyboard");
+        menu_add("这就是普通手表");
         switch (menu_show(1))
         {
         case 1:
@@ -26,6 +27,21 @@ static void wf_hiddenfunc_loop()
             //Keyboard
             pushWatchFace(wf_hiddenfunc_load);
             wf_terminal_load();
+            break;
+        case 4:
+            //这就是普通手表
+            if(msgbox_yn("是否开放完整功能?"))
+            {
+                hal.conf.setValue("watchonly", "0");
+                hal.conf.writeConfig();
+            }
+            else
+            {
+                hal.conf.setValue("watchonly", "1");
+                hal.conf.writeConfig();
+            }
+            msgbox("提示", "执行成功，请按确认键重启");
+            ESP.restart();
             break;
         default:
             break;
