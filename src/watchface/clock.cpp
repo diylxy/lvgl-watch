@@ -200,7 +200,7 @@ static void wf_clock_loop()
                               remaining / 3600, remaining % 3600 / 60, remaining % 60);
         RELEASELV();
     }
-    if(strcmp(hal.conf.getValue("watchonly"), "1") == 0)
+    if (strcmp(hal.conf.getValue("watchonly"), "1") == 0)
     {
         //这就是个普通手表--去除除了闹钟以外的任何功能
         vTaskDelay(50);
@@ -219,6 +219,7 @@ static void wf_clock_loop()
             menu_add(LV_SYMBOL_BELL " 课程管理");
             menu_add(LV_SYMBOL_DOWNLOAD " 更新天气信息");
             menu_add(LV_SYMBOL_SETTINGS " 设置");
+            menu_add(LV_SYMBOL_PLAY " Bilibili");
             menu_add(LV_SYMBOL_SETTINGS " Debug 专用选项");
             switch (menu_show())
             {
@@ -346,11 +347,11 @@ static void wf_clock_loop()
                 case 3:
                     //清除B站登录信息
                     msgbox_yn("是否清除B站登录信息？");
-                    msgbox("失败？", ("需要管理员权限，请看clock.cpp line" + String(__LINE__)).c_str());       //提示：为了防止误删，需要在隐藏功能页面清除
+                    msgbox("失败？", ("需要管理员权限，请看clock.cpp line" + String(__LINE__)).c_str()); //提示：为了防止误删，需要在隐藏功能页面清除
                     break;
                 case 4:
                     //允许振动
-                    if(msgbox_yn("是否允许振动电机工作\n"))
+                    if (msgbox_yn("是否允许振动电机工作\n"))
                     {
                         hal.conf.setValue("enmotor", "1");
                     }
@@ -362,7 +363,7 @@ static void wf_clock_loop()
                     break;
                 case 5:
                     //允许日更信息
-                    if(msgbox_yn("是否允许在每天首次唤醒时自动更新信息"))
+                    if (msgbox_yn("是否允许在每天首次唤醒时自动更新信息"))
                     {
                         hal.conf.setValue("updated", "1");
                     }
@@ -389,10 +390,13 @@ static void wf_clock_loop()
                 }
                 break;
             case 4:
+                //Bilibili
+                pushWatchFace(wf_clock_load);
+                wf_bilibili_load();
+                break;
+            case 5:
                 //DEBUG专用
                 {
-                    pushWatchFace(wf_clock_load);
-                    wf_bilibili_load();
                     break;
                 }
             default:
