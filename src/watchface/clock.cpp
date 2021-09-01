@@ -200,13 +200,13 @@ static void wf_clock_loop()
                               remaining / 3600, remaining % 3600 / 60, remaining % 60);
         RELEASELV();
     }
+    hal.canDeepSleep = true;
     if (strcmp(hal.conf.getValue("watchonly"), "1") == 0)
     {
         //这就是个普通手表--去除除了闹钟以外的任何功能
         vTaskDelay(50);
         return;
     }
-    hal.canDeepSleep = true;
     if (hal.btnEnter.isPressedRaw())
     {
         uint16_t tmp;
