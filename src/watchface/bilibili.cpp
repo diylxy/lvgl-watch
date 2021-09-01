@@ -319,7 +319,7 @@ static void updateInfo()
         return;
     }
     int fans_now = obj["data"]["follower"];
-    if(fans_now != fans_before)
+    if (fans_now != fans_before)
     {
         fans_before = fans_now;
         REQUESTLV();
@@ -386,6 +386,7 @@ void wf_bilibili_load()
             vTaskDelay(10);
         full_screen_msgbox(BIG_SYMBOL_CROSS, "WiFi",
                            "WiFi连接失败，正在退出", FULL_SCREEN_BG_CROSS, 2000);
+        hal.DoNotSleep = false;
         popWatchFace();
         return;
     }
@@ -397,7 +398,9 @@ void wf_bilibili_load()
         {
             full_screen_msgbox(BIG_SYMBOL_CROSS, "登录",
                                "登录失败，正在退出", FULL_SCREEN_BG_CROSS, 2000);
+            hal.DoNotSleep = false;
             popWatchFace();
+            return;
         }
     }
     hal.fLoop = wf_bilibili_loop;
