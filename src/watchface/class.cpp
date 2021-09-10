@@ -95,7 +95,6 @@ static alarm_t *add_class_dialog()
         return NULL;
     }
     memset(&a, 0, sizeof(alarm_t));
-start:
     menu_create();
     menu_add("添加课程");
     menu_add("添加闹钟");
@@ -161,7 +160,7 @@ start:
         }
         t = menu_show(1) - 1;
         if (t == 0xff)
-            goto start;
+            return NULL;
         else
             strcpy(a.subtype, class_names[t]);
     }

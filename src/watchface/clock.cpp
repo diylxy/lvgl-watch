@@ -147,26 +147,29 @@ static void wf_clock_loop()
             swap_class(p);
         }
 
-        uint32_t maxval = 0xffffffff;
-        uint8_t dweek; //用于存储不同天闹钟相差天数
+        uint32_t maxval = 0xffffffff; //总共还有多少分钟，并在后面转换为秒数，实际还有多少秒看remaining
+        uint8_t dweek;                //用于存储不同天闹钟相差天数
         if (curr_class == NULL)
         {
             if (next_class == NULL)
             {
+                //没有添加任何课程
                 remaining = 0xffffffff;
             }
             else
             {
-                dweek = next_class->week < week ||
-                                (next_class->time_start <= p && next_class->week == week)
+                //从0:00到现在还没有上过课，计算距离上课剩余时间
+                //这节课是否在下一周？或者在同一天，但是已经过了
+                dweek = (next_class->week < week || (p >= next_class->time_start && next_class->week == week))
                             ? next_class->week + 7
                             : next_class->week;
                 dweek -= week;
                 maxval = remaining = dweek * 24 * 60 + next_class->time_start - p;
             }
         }
-        else if (next_class->week != week || curr_class->week != week)
+        else if (next_class->week != week && p >= curr_class->time_end)
         {
+            //类似上面的情况，但是今天有课，且已经上完
             dweek = next_class->week <= week ? next_class->week + 7 : next_class->week;
             dweek -= week;
             maxval = remaining = dweek * 24 * 60 + next_class->time_start - p;
@@ -178,7 +181,7 @@ static void wf_clock_loop()
         }
         else if (curr_class->time_end <= p)
         {
-            //当前课程已结束，如果闹钟没有冲突，此时一定有next_class->time_start > p
+            //当前课程已结束，下一节课还未开始，且在同一天，如果闹钟没有冲突，此时一定有next_class->time_start > p
             remaining = next_class->time_start - p;
             maxval = next_class->time_start - curr_class->time_end;
         }

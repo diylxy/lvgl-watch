@@ -154,7 +154,7 @@ alarm_t *class_get_next(uint8_t week, uint16_t now)
 //此函数同get_next，但是不会返回正在进行的课程
 alarm_t *class_get_next_no_curr(uint8_t week, uint16_t now)
 {
-    alarm_t dummy = {ALARM_CLASS, "Dummy", week, 9999, 9999, 0xffff};
+    alarm_t dummy = {ALARM_CLASS, "Dummy", 8, 9999, 9999, 0xffff};
     uint16_t q1 = (int)week * 24 * 60 + (int)now;
     alarm_t *nearest = &dummy;
     for (uint8_t i = 0; i < alarms.alarm_count; ++i)
@@ -178,7 +178,7 @@ alarm_t *class_get_next_no_curr(uint8_t week, uint16_t now)
 alarm_t *class_get_curr(uint8_t week, uint16_t now)
 {
     uint16_t qn = (int)week * 24 * 60 + (int)now;
-    alarm_t dummy = {ALARM_CLASS, 0, week, 0, 0, 0};
+    alarm_t dummy = {ALARM_CLASS, 0, 8, 0, 0, 0};
     alarm_t *nearest = &dummy;
     for (uint8_t i = 0; i < alarms.alarm_count; ++i)
     {
@@ -186,8 +186,8 @@ alarm_t *class_get_curr(uint8_t week, uint16_t now)
         if (alarms.alarm[i].type != ALARM_CLASS)
             continue;
         uint16_t qi, qc;
-        qi = (int)alarms.alarm[i].week * 60 * 24 + alarms.alarm[i].time_end;
-        qc = (int)nearest->week * 60 * 24 + nearest->time_end;
+        qi = (int)alarms.alarm[i].week * 60 * 24 + alarms.alarm[i].time_end;        //当前正在判断的闹钟
+        qc = (int)nearest->week * 60 * 24 + nearest->time_end;                      //目前最接近的闹钟
         if (qi <= qn && qi > qc)
         {
             nearest = &alarms.alarm[i];
@@ -197,7 +197,7 @@ alarm_t *class_get_curr(uint8_t week, uint16_t now)
             return &alarms.alarm[i];
         }
     }
-    if (nearest != &dummy)
+    if (nearest != &dummy && nearest->week == week)
         return nearest;
     return NULL;
 }
