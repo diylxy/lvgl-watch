@@ -159,7 +159,7 @@ static alarm_t *add_class_dialog()
             menu_add(class_names[i]);
         }
         t = menu_show(1) - 1;
-        if (t == 0xff)
+        if (t == 0xffff)
             return NULL;
         else
             strcpy(a.subtype, class_names[t]);
