@@ -16,7 +16,7 @@
 #define WEATHER_SNOW_HEAVY "\xEF\x9F\x8F"
 
 #define WEATHER_TYPE_COUNT 20
-const char *weather_codes[] = 
+const char *weather_codes[WEATHER_TYPE_COUNT] = 
 {
     "CLEAR_DAY",
     "CLEAR_NIGHT",
@@ -39,7 +39,7 @@ const char *weather_codes[] =
     "SAND",
     "WIND",
 };
-const char *weather_names[] = {
+const char *weather_names[WEATHER_TYPE_COUNT] = {
     "晴",
     "晴",
     "多云",
@@ -61,7 +61,7 @@ const char *weather_names[] = {
     "沙尘",
     "大风"
 };
-const char *weather_icons[] = {
+const char *weather_icons[WEATHER_TYPE_COUNT] = {
     WEATHER_SUN,
     WEATHER_SUN,
     WEATHER_SUN_CLOUD,
@@ -93,4 +93,5 @@ uint16_t Weather::codeToNum(const char *code)
             return i;
         }
     }
+    return 0;
 }

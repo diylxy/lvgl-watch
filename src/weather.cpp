@@ -5,6 +5,7 @@ Weather weather;
  * @brief 移动stream，直到找到某个字符串
  * @return 是否找到这个字符串
  */
+/*
 bool gotoStr(WiFiClient &stream, String str)
 {
     char *strchr = (char *)malloc(str.length() + 1);
@@ -16,6 +17,7 @@ bool gotoStr(WiFiClient &stream, String str)
     bool found = false;
     bool notfound = false;
     char c;
+    strcpy(strchr, str.c_str());
     while (stream.available())
     {
         stream.readBytes(&c, 1);
@@ -43,12 +45,11 @@ bool gotoStr(WiFiClient &stream, String str)
             found = true;
             break;
         }
-        Serial.print(c);
     }
     free(strchr);
     free(strqueue);
     return found;
-}
+}*/
 
 void Weather::begin()
 {
@@ -105,11 +106,11 @@ int8_t Weather::refresh(String location)
             http.end();
             return -3;
         }
-        if (!gotoStr(stream, "result"))
+        if (!stream.find("result"))
         {
             goto error_cannot_find_str;
         }
-        if (!gotoStr(stream, "\"minutely\":"))
+        if (!stream.find("\"minutely\":"))
         {
             goto error_cannot_find_str;
         }
@@ -120,51 +121,55 @@ int8_t Weather::refresh(String location)
         {
             rain[i] = doc["precipitation_2h"][i].as<float>() * 100;
         }
-        Serial.println(doc["description"].as<String>());
         strcpy(desc2, doc["description"].as<String>().c_str());
-        if (!gotoStr(stream, "\"description\":\""))
+        if (!stream.find("\"description\":\""))
         {
             goto error_cannot_find_str;
         }
         payload = stream.readStringUntil('"');
-        Serial.println(payload);
-        strcpy(desc1, payload.c_str());
+        payload = "{\"str\":\"" + payload + "\"}";
+        deserializeJson(doc, payload);
+        strcpy(desc1, doc["str"].as<String>().c_str());
         //温度
-        stream.readStringUntil('[');
-        stream.readStringUntil('[');
-        payload = stream.readStringUntil(']');
-        payload = "{[" + payload + "]}";
-        deserializeJson(doc, payload);
-        for (uint8_t i = 0; i < 48; ++i)
-        {
-            String timestr;
-            timestr = doc[i]["value"].as<String>();
-            timestr = timestr.substring(5, 13);
-            strcpy(hour24[i].date, timestr.c_str());
-            hour24[i].temperature = int16_t(doc[i]["value"].as<float>() * 10);
-        }
-        //风力
-        stream.readStringUntil('[');
-        payload = stream.readStringUntil(']');
-        payload = "{[" + payload + "]}";
-        deserializeJson(doc, payload);
-        for (uint8_t i = 0; i < 48; ++i)
-        {
-            hour24[i].winddirection = uint16_t(doc[i]["direction"].as<float>());
-            hour24[i].windspeed = uint16_t(doc[i]["speed"].as<float>() * 10);
-        }
-        //天气类型
-        if (!gotoStr(stream, "skycon"))
+        if (!stream.find("\"temperature\""))
         {
             goto error_cannot_find_str;
         }
         stream.readStringUntil('[');
         payload = stream.readStringUntil(']');
-        payload = "{[" + payload + "]}";
+        payload = "{\"arr\":[" + payload + "]}";
         deserializeJson(doc, payload);
         for (uint8_t i = 0; i < 48; ++i)
         {
-            hour24[i].weathernum = codeToNum(doc[i]["value"].as<String>().c_str());
+            String timestr;
+            timestr = doc["arr"][i]["datetime"].as<String>();
+            timestr = timestr.substring(5, 13);
+            strcpy(hour24[i].date, timestr.c_str());
+            hour24[i].temperature = int16_t(doc["arr"][i]["value"].as<float>() * 10);
+        }
+        //风力
+        stream.readStringUntil('[');
+        payload = stream.readStringUntil(']');
+        payload = "{\"arr\":[" + payload + "]}";
+        deserializeJson(doc, payload);
+        for (uint8_t i = 0; i < 48; ++i)
+        {
+            hour24[i].winddirection = uint16_t(doc["arr"][i]["direction"].as<float>());
+            hour24[i].windspeed = uint16_t(doc["arr"][i]["speed"].as<float>() * 10);
+        }
+        //天气类型
+        if (!stream.find("skycon"))
+        {
+            goto error_cannot_find_str;
+        }
+        stream.readStringUntil('[');
+        payload = stream.readStringUntil(']');
+        payload = "{\"arr\":[" + payload + "]}";
+        deserializeJson(doc, payload);
+        for (uint8_t i = 0; i < 48; ++i)
+        {
+            String s = doc["arr"][i]["value"].as<String>();
+            hour24[i].weathernum = codeToNum(s.c_str());
         }
     }
     else
