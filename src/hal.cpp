@@ -387,10 +387,10 @@ bool Watch_HAL::NTPSync()
     }
     vTaskDelay(100);
     hal.Udp.begin(8888);
-    time_t tm_now = getNtpTime();
+    time_t tm_now = getNtpTime() + CONFIG_NTP_OFFSET;
     if (tm_now != 0)
     {
-        DateTime dt(tm_now + CONFIG_NTP_OFFSET);
+        DateTime dt(tm_now);
         hal.rtc.setYear(dt.year() - 2000);
         hal.rtc.setMonth(dt.month());
         hal.rtc.setDate(dt.day());
