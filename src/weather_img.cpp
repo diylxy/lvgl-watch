@@ -14,87 +14,84 @@
 #define WEATHER_LIGHTNING "\xEF\x83\xA7"
 #define WEATHER_SNOW "\xEF\x8B\x9C"
 #define WEATHER_SNOW_HEAVY "\xEF\x9F\x8F"
-const char *Weather::weatherNumtoImage(uint16_t num)
+
+#define WEATHER_TYPE_COUNT 20
+const char *weather_codes[WEATHER_TYPE_COUNT] = 
 {
-    switch (num)
+    "CLEAR_DAY",
+    "CLEAR_NIGHT",
+    "PARTLY_CLOUDY_DAY",
+    "PARTLY_CLOUDY_NIGHT",
+    "CLOUDY",
+    "LIGHT_HAZE",
+    "MODERATE_HAZE",
+    "HEAVY_HAZE",
+    "LIGHT_RAIN",
+    "MODERATE_RAIN",
+    "HEAVY_RAIN",
+    "STORM_RAIN",
+    "FOG",
+    "LIGHT_SNOW",
+    "MODERATE_SNOW",
+    "HEAVY_SNOW",
+    "STORM_SNOW",
+    "DUST",
+    "SAND",
+    "WIND",
+};
+const char *weather_names[WEATHER_TYPE_COUNT] = {
+    "晴",
+    "晴",
+    "多云",
+    "多云",
+    "阴",
+    "轻度雾霾",
+    "中度雾霾",
+    "重度雾霾",
+    "小雨",
+    "中雨",
+    "大雨",
+    "暴雨",
+    "雾",
+    "小雪",
+    "中雪",
+    "大雪",
+    "暴雪",
+    "浮尘",
+    "沙尘",
+    "大风"
+};
+const char *weather_icons[WEATHER_TYPE_COUNT] = {
+    WEATHER_SUN,
+    WEATHER_SUN,
+    WEATHER_SUN_CLOUD,
+    WEATHER_SUN_CLOUD,
+    WEATHER_CLOUD,
+    WEATHER_WATER,
+    WEATHER_WATER,
+    WEATHER_EYE_SLASH,
+    WEATHER_RAIN,
+    WEATHER_SHOWER,
+    WEATHER_SHOWER_HEAVY,
+    WEATHER_FLOOD,
+    WEATHER_WATER,
+    WEATHER_SNOW,
+    WEATHER_SNOW,
+    WEATHER_SNOW_HEAVY,
+    WEATHER_SNOW_HEAVY,
+    WEATHER_SAND_STORM,
+    WEATHER_SAND_STORM,
+    WEATHER_WIND
+};
+
+uint16_t Weather::codeToNum(const char *code)
+{
+    for(uint8_t i = 0; i < WEATHER_TYPE_COUNT; ++i)
     {
-    case 0:
-        return WEATHER_SUN;
-    case 1:
-        return WEATHER_SUN_CLOUD;
-    case 2:
-        return WEATHER_CLOUD;
-    case 3:
-        return WEATHER_RAIN;
-    case 4:
-        return WEATHER_LIGHTNING;
-    case 5:
-        return WEATHER_LIGHTNING;
-    case 6:
-        return WEATHER_RAIN_SNOW;
-    case 7:
-        return WEATHER_RAIN;
-    case 8:
-        return WEATHER_RAIN;
-    case 9:
-        return WEATHER_SHOWER;
-    case 10:
-    case 11:
-        return WEATHER_SHOWER_HEAVY;
-        return WEATHER_SHOWER_HEAVY;
-    case 12:
-        return WEATHER_FLOOD;
-    case 13:
-    case 14:
-    case 15:
-        return WEATHER_SNOW;
-    case 16:
-    case 17:
-        return WEATHER_SNOW_HEAVY;
-    case 18:
-        return WEATHER_WIND;
-    case 19:
-        return WEATHER_RAIN_SNOW;
-    case 20:
-        return WEATHER_SAND_STORM;
-    case 21:
-    case 22:
-        return WEATHER_RAIN;
-    case 23:
-        return WEATHER_SHOWER;
-    case 24:
-        return WEATHER_SHOWER_HEAVY;
-    case 25:
-        return WEATHER_FLOOD;
-    case 26:
-    case 27:
-        return WEATHER_SNOW;
-    case 28:
-        return WEATHER_SNOW_HEAVY;
-    case 29:
-    case 30:
-        return WEATHER_SAND_STORM;
-    case 31:
-    case 32:
-    case 49:
-        return WEATHER_EYE_SLASH;
-    case 53:
-    case 54:
-        return WEATHER_WATER; //应该是雾，但是没找到图标
-    case 55:
-    case 56:
-        return WEATHER_EYE_SLASH;
-    case 57:
-        return WEATHER_WATER;
-    case 58:
-        return WEATHER_EYE_SLASH;
-    case 99:
-        return "";
-    case 301:
-        return WEATHER_RAIN;
-    case 302:
-        return WEATHER_SNOW;
-    default:
-        return "";
+        if(strcmp(weather_codes[i], code) == 0)
+        {
+            return i;
+        }
     }
+    return 0;
 }

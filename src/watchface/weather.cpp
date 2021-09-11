@@ -1,10 +1,38 @@
 #include "A_config.h"
 
+#define WEATHER_PAGES 3
+static uint8_t currentPage = 0;
+static weatherInfo24H* currentWeather;
+///////////////////////////////////////////////////////////
 static lv_obj_t *scr_weather;
 static lv_obj_t *lblheader;
-static lv_obj_t *weather_image;
 static lv_obj_t *lbltemperature;
-static uint8_t currentTime = 0;
+static lv_obj_t *lblUpdateTime;
+//page-0
+static lv_obj_t *weather_image;
+//page-1
+static lv_obj_t *lbldesc1;
+static lv_obj_t *lbldesc2;
+//page-2
+static lv_obj_t *chart_rain;
+
+static void wf_weather_page_0_load()
+{
+    REQUESTLV();
+    lv_label_set_text(weather_image, weather_icons[currentWeather->weathernum]);
+    lv_label_set_text(lblheader, weather_names[currentWeather->weathernum]);
+    lv_label_set_text_fmt(lbltemperature, "%d℃", currentWeather->temperature/10);
+    RELEASELV();
+}
+
+static void wf_weather_page_1_load()
+{
+    REQUESTLV();
+    lv_label_set_text(lbldesc1, weather.desc1);
+    lv_label_set_text(lbldesc2, weather.desc2);
+    RELEASELV();
+}
+
 static void wf_weather_loop()
 {
     if(hal.btnUp.isPressedRaw())
@@ -12,35 +40,102 @@ static void wf_weather_loop()
         popWatchFace();
         return;
     }
+    if(hal.btnEnter.isPressedRaw())
+    {
+        switch(currentPage)
+        {
+            case 0:
+                lv_obj_set_pos(lblheader, -40, -70);
+                lv_obj_set_pos(lbltemperature, 40, -70);
+                lv_obj_fade_out(weather_image, 300, 0);
+                lv_obj_set_pos(lbldesc2, 30, 140);
+                lv_obj_fade_in(lbldesc1, 300, 0);
+                lv_obj_fade_in(lbldesc2, 300, 0);
+                break;
+            case 1:
+                lv_obj_fade_out(lbldesc1, 300, 0);
+                lv_obj_set_pos(lbldesc2, 30, 60);
+                lv_obj_fade_in(chart_rain, 300, 0);
+                break;
+            case 2:
+                lv_obj_fade_out(lbldesc2, 300, 0);
+                lv_obj_fade_out(chart_rain, 300, 0);
+                lv_obj_fade_in(weather_image, 300, 0);
+                lv_obj_set_pos(lblheader, 0, -70);
+                lv_obj_set_pos(lbltemperature, 0, 70);
+                break;
+            default:
+                currentPage = 0;
+                break;
+        }
+        ++currentPage;
+        if(currentPage == WEATHER_PAGES)
+            currentPage = 0;
+        while(hal.btnEnter.isPressedRaw())vTaskDelay(100);
+    }
     vTaskDelay(100);
 }
 
 void wf_weather_load()
 {
-    currentTime = hal.rtc.getHour();
+    currentWeather = weather.getWeather(hal.rtc.getMonth(), hal.rtc.getDate(),hal.rtc.getHour());
+    if(currentWeather == NULL)
+    {
+        msgbox(LV_SYMBOL_WARNING " 警告", "天气信息已过时", 3000);
+        popWatchFace();
+        return;
+    }
+    currentPage = 0;
     REQUESTLV();
     scr_weather = lv_obj_create(NULL);
     lv_obj_set_style_bg_color(scr_weather, lv_palette_main(LV_PALETTE_BLUE), 0);
     lv_scr_load_anim(scr_weather, LV_SCR_LOAD_ANIM_MOVE_BOTTOM, 300, 0, true);
-
+    lblUpdateTime = lv_label_create(scr_weather);
+    lv_label_set_text(lblUpdateTime, weather.hour24[0].date);
+    lv_obj_set_style_text_color(lblUpdateTime, lv_color_white(), 0);
+    lv_obj_align(lblUpdateTime, LV_ALIGN_CENTER, 0, 85);
+    ////Page-0
+    lbltemperature = lv_label_create(scr_weather);
+    lblheader = lv_label_create(scr_weather);
     weather_image = lv_label_create(scr_weather);
-    lv_obj_align(weather_image, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_size(weather_image, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_set_style_text_font(weather_image, &font_weather_symbol_96, 0);
-    lv_label_set_text(weather_image, weather.weatherNumtoImage(weather.hour24[currentTime].weathernum));
     lv_obj_set_style_text_color(weather_image, lv_color_white(), 0);
-
-    lblheader = lv_label_create(scr_weather);
-    lv_label_set_text(lblheader, weather.hour24[currentTime].weatherName.c_str());
     lv_obj_set_style_text_font(lblheader, &font_weather_32, 0);
-    lv_obj_align(lblheader, LV_ALIGN_CENTER, 0, -70);
     lv_obj_set_style_text_color(lblheader, lv_color_white(), 0);
-
-    lbltemperature = lv_label_create(scr_weather);
-    lv_label_set_text_fmt(lbltemperature, "%d℃", weather.hour24[currentTime].temperature);
     lv_obj_set_style_text_font(lbltemperature, &font_weather_num_24, 0);
-    lv_obj_align(lbltemperature, LV_ALIGN_CENTER, 0, 70);
     lv_obj_set_style_text_color(lbltemperature, lv_color_white(), 0);
+    lv_obj_align(weather_image, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align(lblheader, LV_ALIGN_CENTER, 0, -70);
+    lv_obj_align(lbltemperature, LV_ALIGN_CENTER, 0, 70);
+    ////Page-1
+    lbldesc1 = lv_label_create(scr_weather);
+    lbldesc2 = lv_label_create(scr_weather);
+    lv_obj_set_style_text_font(lbldesc1, &lv_font_chinese_16, 0);
+    lv_obj_set_style_text_font(lbldesc2, &lv_font_chinese_16, 0);
+    lv_obj_set_style_text_color(lbldesc1, lv_color_white(), 0);
+    lv_obj_set_style_text_color(lbldesc2, lv_color_white(), 0);
+    lv_obj_set_width(lbldesc1, 180);
+    lv_obj_set_width(lbldesc2, 180);
+    lv_label_set_long_mode(lbldesc1, LV_LABEL_LONG_WRAP);
+    lv_label_set_long_mode(lbldesc2, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_opa(lbldesc1, 0, 0);
+    lv_obj_set_style_opa(lbldesc2, 0, 0);
+    lv_obj_set_pos(lbldesc1, 30, 80);
+    lv_obj_set_pos(lbldesc2, 30, 140);
+    //Page-2
+    chart_rain = lv_chart_create(scr_weather);
+    lv_obj_set_size(chart_rain, 140, 80);
+    lv_obj_set_pos(chart_rain, 50, 120);
+    lv_chart_set_range(chart_rain, LV_CHART_AXIS_PRIMARY_X, 0, 540);
+    lv_chart_set_range(chart_rain, LV_CHART_AXIS_PRIMARY_Y, 0, 120);
+    lv_obj_set_style_size(chart_rain, 0, LV_PART_INDICATOR);
+    lv_chart_series_t * ser = lv_chart_add_series(chart_rain, lv_palette_main(LV_PALETTE_BLUE), LV_CHART_AXIS_PRIMARY_Y);
+    lv_chart_set_point_count(chart_rain, 120);      //点数
+    lv_chart_set_ext_y_array(chart_rain, ser, (lv_coord_t *)weather.rain);
+    lv_obj_set_style_opa(chart_rain, 0, 0);
     RELEASELV();
+    wf_weather_page_0_load();
+    wf_weather_page_1_load();
     hal.fLoop = wf_weather_loop;
 }

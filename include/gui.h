@@ -34,6 +34,16 @@ void lv_obj_fall_down(lv_obj_t *obj, uint16_t distance = 24,
 void lv_obj_floating_add(lv_obj_t *obj, uint16_t waitBeforeStart);
 
 /**
+ * @brief 移动到指定位置，渐慢动画
+ * @param obj lvgl对象指针
+ * @param x 目标位置x坐标
+ * @param y 目标位置y坐标
+ * @param time 动画持续时长
+ * @param delay 动画开始前延时
+ */
+void lv_obj_move_anim(lv_obj_t *obj, uint16_t x, uint16_t y,
+                      uint16_t time = 500, uint16_t waitBeforeStart = 0);
+/**
  * @brief 创建并初始化菜单控件，清空菜单数组，但是不会立刻显示菜单。创建菜单第一步
  */
 void menu_create(void);
