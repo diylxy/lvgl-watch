@@ -30,8 +30,8 @@ public:
     weatherInfo24H *getWeather(uint8_t month, uint8_t date, uint8_t hour);
     weatherInfo24H hour24[48];
     uint16_t rain[120]; //降水量，定点2位小数，单位mm/h
-    char desc1[60];     //自然语言天气描述·综合
-    char desc2[60];     //自然语言天气描述·分钟级
+    char desc1[100];     //自然语言天气描述·综合
+    char desc2[100];     //自然语言天气描述·分钟级
 };
 extern Weather weather;
 
