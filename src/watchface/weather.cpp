@@ -4,7 +4,7 @@ static lv_obj_t *scr_weather;
 static lv_obj_t *lblheader;
 static lv_obj_t *weather_image;
 static lv_obj_t *lbltemperature;
-static uint8_t currentTime = 0;
+static weatherInfo24H* currentWeather;
 static void wf_weather_loop()
 {
     if(hal.btnUp.isPressedRaw())
@@ -17,7 +17,7 @@ static void wf_weather_loop()
 
 void wf_weather_load()
 {
-    currentTime = hal.rtc.getHour();
+    currentWeather = weather.getWeather(hal.rtc.getMonth(), hal.rtc.getDate(),hal.rtc.getHour());
     REQUESTLV();
     scr_weather = lv_obj_create(NULL);
     lv_obj_set_style_bg_color(scr_weather, lv_palette_main(LV_PALETTE_BLUE), 0);
@@ -27,17 +27,17 @@ void wf_weather_load()
     lv_obj_align(weather_image, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_size(weather_image, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_set_style_text_font(weather_image, &font_weather_symbol_96, 0);
-    lv_label_set_text(weather_image, weather.weatherNumtoImage(weather.hour24[currentTime].weathernum));
+    lv_label_set_text(weather_image, weather_icons[currentWeather->weathernum]);
     lv_obj_set_style_text_color(weather_image, lv_color_white(), 0);
 
     lblheader = lv_label_create(scr_weather);
-    lv_label_set_text(lblheader, weather.hour24[currentTime].weatherName.c_str());
+    lv_label_set_text(lblheader, weather_names[currentWeather->weathernum]);
     lv_obj_set_style_text_font(lblheader, &font_weather_32, 0);
     lv_obj_align(lblheader, LV_ALIGN_CENTER, 0, -70);
     lv_obj_set_style_text_color(lblheader, lv_color_white(), 0);
 
     lbltemperature = lv_label_create(scr_weather);
-    lv_label_set_text_fmt(lbltemperature, "%d℃", weather.hour24[currentTime].temperature);
+    lv_label_set_text_fmt(lbltemperature, "%d℃", currentWeather->temperature/10);
     lv_obj_set_style_text_font(lbltemperature, &font_weather_num_24, 0);
     lv_obj_align(lbltemperature, LV_ALIGN_CENTER, 0, 70);
     lv_obj_set_style_text_color(lbltemperature, lv_color_white(), 0);

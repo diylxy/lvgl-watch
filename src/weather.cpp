@@ -1,6 +1,55 @@
 #include "A_config.h"
 #include <HTTPClient.h>
 Weather weather;
+/**
+ * @brief 移动stream，直到找到某个字符串
+ * @return 是否找到这个字符串
+ */
+bool gotoStr(WiFiClient &stream, String str)
+{
+    char *strchr = (char *)malloc(str.length() + 1);
+    char *strqueue = (char *)malloc(str.length() + 1); //查找队列
+    int16_t strlength = str.length();
+    int8_t queuehead = 0;    //队列头指针
+    int8_t queuereadptr = 0; //队列读取指针
+    uint8_t i;               //目标字符串位置指针
+    bool found = false;
+    bool notfound = false;
+    char c;
+    while (stream.available())
+    {
+        stream.readBytes(&c, 1);
+        strchr[queuehead] = c;
+        ++queuehead;
+        if (queuehead == strlength)
+            queuehead = 0;
+        queuereadptr = queuehead;
+        notfound = false;
+        i = 0;
+        while (i < strlength)
+        {
+            if (strqueue[queuereadptr] != strchr[i])
+            {
+                notfound = true;
+                break;
+            }
+            ++queuereadptr;
+            ++i;
+            if (queuereadptr == strlength)
+                queuereadptr = 0;
+        }
+        if (notfound == false)
+        {
+            found = true;
+            break;
+        }
+        Serial.print(c);
+    }
+    free(strchr);
+    free(strqueue);
+    return found;
+}
+
 void Weather::begin()
 {
     started = false;
@@ -9,12 +58,17 @@ void Weather::begin()
         return;
     if (file.readBytes((char *)&hour24, sizeof(hour24)) == sizeof(hour24))
     {
-        started = true;
+        file.readBytes((char *)&desc1, sizeof(desc1));
+        file.readBytes((char *)&desc2, sizeof(desc2));
+        if (file.readBytes((char *)&rain, sizeof(rain)) == sizeof(rain))
+        {
+            started = true;
+        }
     }
     file.close();
 }
 
-int8_t Weather::refresh(String cityName)
+int8_t Weather::refresh(String location)
 {
     if (hal.conf.getString("weatherappkey") == "")
     {
@@ -28,37 +82,89 @@ int8_t Weather::refresh(String cityName)
     }
     HTTPClient http;
     hal.DoNotSleep = true;
-    http.begin("http://way.jd.com/jisuapi/weather?city=" + cityName + "&appkey=" + hal.conf.getString("weatherappkey")); //HTTP
+    http.addHeader("Accept", "*/*");
+    http.addHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36");
+    //http.begin("http://api.caiyunapp.com/v2.5/96Ly7wgKGq6FhllM/" + location + "/weather.jsonp?unit=metric:v2"); //HTTP
+    http.begin("http://api.caiyunapp.com/v2.5/96Ly7wgKGq6FhllM/116.0684%2C39.4978/weather.jsonp?unit=metric%3Av2"); //HTTP
     int httpCode = http.GET();
 
     if (httpCode == HTTP_CODE_OK)
     {
-        bool isnextday = false;
-        uint8_t last_time = 0;
-        uint8_t this_time = 0;
-        String payload = http.getString();
+        String payload;
         DynamicJsonDocument doc(10240);
+        WiFiClient &stream = http.getStream();
+        stream.readStringUntil('"');
+        stream.readStringUntil('"');
+        stream.readStringUntil('"');
+        payload = stream.readStringUntil('"');
+        if (payload != "ok")
+        {
+            Serial.println("API已失效");
+            Serial.println(payload);
+            hal.DoNotSleep = false;
+            http.end();
+            return -3;
+        }
+        if (!gotoStr(stream, "result"))
+        {
+            goto error_cannot_find_str;
+        }
+        if (!gotoStr(stream, "\"minutely\":"))
+        {
+            goto error_cannot_find_str;
+        }
+        payload = stream.readStringUntil('}');
+        payload = payload + "}";
         deserializeJson(doc, payload);
-
-        String date = doc["result"]["result"]["date"];
-        updateDate = date.substring(8, 10).toInt();
-        for (uint8_t i = 0; i < 24; ++i)
+        for (uint8_t i = 0; i < 120; ++i)
+        {
+            rain[i] = doc["precipitation_2h"][i].as<float>() * 100;
+        }
+        Serial.println(doc["description"].as<String>());
+        strcpy(desc2, doc["description"].as<String>().c_str());
+        if (!gotoStr(stream, "\"description\":\""))
+        {
+            goto error_cannot_find_str;
+        }
+        payload = stream.readStringUntil('"');
+        Serial.println(payload);
+        strcpy(desc1, payload.c_str());
+        //温度
+        stream.readStringUntil('[');
+        stream.readStringUntil('[');
+        payload = stream.readStringUntil(']');
+        payload = "{[" + payload + "]}";
+        deserializeJson(doc, payload);
+        for (uint8_t i = 0; i < 48; ++i)
         {
             String timestr;
-            timestr = doc["result"]["result"]["hourly"][i]["time"].as<String>();
-            timestr = timestr.substring(0, 2);
-            if(timestr.substring(1) == ":")
-            {
-                timestr = timestr.substring(0, 1);
-            }
-            Serial.println(timestr);
-            this_time = timestr.toInt();
-            if (this_time < last_time)
-                isnextday = true;
-            hour24[this_time].weathernum = doc["result"]["result"]["hourly"][i]["img"].as<String>().toInt();
-            hour24[this_time].weatherName = doc["result"]["result"]["hourly"][i]["weather"].as<String>();
-            hour24[this_time].temperature = doc["result"]["result"]["hourly"][i]["temp"].as<String>().toInt();
-            hour24[this_time].isnextday = isnextday;
+            timestr = doc[i]["value"].as<String>();
+            timestr = timestr.substring(5, 13);
+            strcpy(hour24[i].date, timestr.c_str());
+            hour24[i].temperature = int16_t(doc[i]["value"].as<float>() * 10);
+        }
+        //风力
+        stream.readStringUntil('[');
+        payload = stream.readStringUntil(']');
+        payload = "{[" + payload + "]}";
+        deserializeJson(doc, payload);
+        for (uint8_t i = 0; i < 48; ++i)
+        {
+            hour24[i].winddirection = uint16_t(doc[i]["direction"].as<float>());
+            hour24[i].windspeed = uint16_t(doc[i]["speed"].as<float>() * 10);
+        }
+        //天气类型
+        if (!gotoStr(stream, "skycon"))
+        {
+            goto error_cannot_find_str;
+        }
+        stream.readStringUntil('[');
+        payload = stream.readStringUntil(']');
+        payload = "{[" + payload + "]}";
+        deserializeJson(doc, payload);
+        for (uint8_t i = 0; i < 48; ++i)
+        {
+            hour24[i].weathernum = codeToNum(doc[i]["value"].as<String>().c_str());
         }
     }
     else
@@ -73,6 +179,11 @@ int8_t Weather::refresh(String cityName)
     started = true;
     save();
     return 0;
+error_cannot_find_str:
+    Serial.println("找不到指定字符串");
+    hal.DoNotSleep = false;
+    http.end();
+    return -4;
 }
 
 void Weather::save()
@@ -81,10 +192,24 @@ void Weather::save()
     if (!file)
         return;
     file.write((uint8_t *)&hour24, sizeof(hour24));
+    file.write((uint8_t *)&desc1, sizeof(desc1));
+    file.write((uint8_t *)&desc2, sizeof(desc2));
+    file.write((uint8_t *)&rain, sizeof(rain));
     file.close();
 }
 
-bool Weather::available(uint8_t date)
+weatherInfo24H *Weather::getWeather(uint8_t month, uint8_t date, uint8_t hour)
 {
-    return date == updateDate && started == true;
+    if (started == false)
+        return NULL;
+    char strdate[9];
+    sprintf(strdate, "%02d-%02dT%02d", month, date, hour);
+    for (uint8_t i = 0; i < 48; ++i)
+    {
+        if (strcmp(strdate, hour24[i].date) == 0)
+        {
+            return &hour24[i];
+        }
+    }
+    return NULL;
 }
