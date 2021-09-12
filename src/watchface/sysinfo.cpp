@@ -37,8 +37,8 @@ void wf_sysinfo_loop()
     switch (page)
     {
     case 0:
-        sprintf(strInfo, "硬件信息\n可用动态内存:%d B\n运行时间:%ds\n当前CPU频率:%dMHz\n当前Flash频率:%uMHz\n主板温度:%f C\n", heap_caps_get_free_size(MALLOC_CAP_DEFAULT),
-                millis() / 1000, ESP.getCpuFreqMHz(), ESP.getFlashChipSpeed() / 1000000L, hal.rtc.getTemperature());
+        sprintf(strInfo, "硬件信息\n可用动态内存:%u B\n运行时间:%u s\n当前CPU频率:%u MHz\n当前Flash频率:%u MHz\n主板温度:%f C\n", heap_caps_get_free_size(MALLOC_CAP_DEFAULT),
+                millis() / 1000, ESP.getCpuFreqMHz(), ESP.getFlashChipSpeed() / 1000000, hal.rtc.getTemperature());
         break;
     case 1:
         hal.rtc.getA1Time(day, h, m, s, dummy, dateorday);
