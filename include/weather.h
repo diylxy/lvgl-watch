@@ -28,7 +28,7 @@ public:
     bool available(uint8_t date);
     uint16_t codeToNum(const char *code);
     weatherInfo24H *getWeather(uint8_t month, uint8_t date, uint8_t hour);
-    weatherInfo24H hour24[48];
+    weatherInfo24H hour24[120];
     uint16_t rain[120]; //降水量，定点2位小数，单位mm/h
     char desc1[100];     //自然语言天气描述·综合
     char desc2[100];     //自然语言天气描述·分钟级

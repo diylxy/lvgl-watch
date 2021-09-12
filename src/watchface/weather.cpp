@@ -2,7 +2,7 @@
 
 #define WEATHER_PAGES 3
 static uint8_t currentPage = 0;
-static weatherInfo24H* currentWeather;
+static weatherInfo24H *currentWeather;
 ///////////////////////////////////////////////////////////
 static lv_obj_t *scr_weather;
 static lv_obj_t *lblheader;
@@ -21,7 +21,7 @@ static void wf_weather_page_0_load()
     REQUESTLV();
     lv_label_set_text(weather_image, weather_icons[currentWeather->weathernum]);
     lv_label_set_text(lblheader, weather_names[currentWeather->weathernum]);
-    lv_label_set_text_fmt(lbltemperature, "%d℃", currentWeather->temperature/10);
+    lv_label_set_text_fmt(lbltemperature, "%d℃", currentWeather->temperature / 10);
     RELEASELV();
 }
 
@@ -35,51 +35,52 @@ static void wf_weather_page_1_load()
 
 static void wf_weather_loop()
 {
-    if(hal.btnUp.isPressedRaw())
+    if (hal.btnUp.isPressedRaw())
     {
         popWatchFace();
         return;
     }
-    if(hal.btnEnter.isPressedRaw())
+    if (hal.btnEnter.isPressedRaw())
     {
-        switch(currentPage)
+        switch (currentPage)
         {
-            case 0:
-                lv_obj_set_pos(lblheader, -40, -70);
-                lv_obj_set_pos(lbltemperature, 40, -70);
-                lv_obj_fade_out(weather_image, 300, 0);
-                lv_obj_set_pos(lbldesc2, 30, 140);
-                lv_obj_fade_in(lbldesc1, 300, 0);
-                lv_obj_fade_in(lbldesc2, 300, 0);
-                break;
-            case 1:
-                lv_obj_fade_out(lbldesc1, 300, 0);
-                lv_obj_set_pos(lbldesc2, 30, 60);
-                lv_obj_fade_in(chart_rain, 300, 0);
-                break;
-            case 2:
-                lv_obj_fade_out(lbldesc2, 300, 0);
-                lv_obj_fade_out(chart_rain, 300, 0);
-                lv_obj_fade_in(weather_image, 300, 0);
-                lv_obj_set_pos(lblheader, 0, -70);
-                lv_obj_set_pos(lbltemperature, 0, 70);
-                break;
-            default:
-                currentPage = 0;
-                break;
+        case 0:
+            lv_obj_set_pos(lblheader, -40, -70);
+            lv_obj_set_pos(lbltemperature, 40, -70);
+            lv_obj_fade_out(weather_image, 300, 0);
+            lv_obj_set_pos(lbldesc2, 30, 140);
+            lv_obj_fade_in(lbldesc1, 300, 0);
+            lv_obj_fade_in(lbldesc2, 300, 0);
+            break;
+        case 1:
+            lv_obj_fade_out(lbldesc1, 300, 0);
+            lv_obj_set_pos(lbldesc2, 30, 60);
+            lv_obj_fade_in(chart_rain, 300, 0);
+            break;
+        case 2:
+            lv_obj_fade_out(lbldesc2, 300, 0);
+            lv_obj_fade_out(chart_rain, 300, 0);
+            lv_obj_fade_in(weather_image, 300, 0);
+            lv_obj_set_pos(lblheader, 0, -70);
+            lv_obj_set_pos(lbltemperature, 0, 70);
+            break;
+        default:
+            currentPage = 0;
+            break;
         }
         ++currentPage;
-        if(currentPage == WEATHER_PAGES)
+        if (currentPage == WEATHER_PAGES)
             currentPage = 0;
-        while(hal.btnEnter.isPressedRaw())vTaskDelay(100);
+        while (hal.btnEnter.isPressedRaw())
+            vTaskDelay(100);
     }
     vTaskDelay(100);
 }
 
 void wf_weather_load()
 {
-    currentWeather = weather.getWeather(hal.rtc.getMonth(), hal.rtc.getDate(),hal.rtc.getHour());
-    if(currentWeather == NULL)
+    currentWeather = weather.getWeather(hal.rtc.getMonth(), hal.rtc.getDate(), hal.rtc.getHour());
+    if (currentWeather == NULL)
     {
         msgbox(LV_SYMBOL_WARNING " 警告", "天气信息已过时", 3000);
         popWatchFace();
@@ -127,11 +128,20 @@ void wf_weather_load()
     chart_rain = lv_chart_create(scr_weather);
     lv_obj_set_size(chart_rain, 140, 80);
     lv_obj_set_pos(chart_rain, 50, 120);
-    lv_chart_set_range(chart_rain, LV_CHART_AXIS_PRIMARY_X, 0, 540);
-    lv_chart_set_range(chart_rain, LV_CHART_AXIS_PRIMARY_Y, 0, 120);
+    lv_chart_set_range(chart_rain, LV_CHART_AXIS_PRIMARY_Y, 0, 2600);
+    int16_t m = 0;
+    for (int8_t i = 0; i < 120; ++i)
+    {
+        if (weather.rain[i] > m)
+        {
+            m = weather.rain[i];
+        }
+    }
+    if (m > 2600)
+        lv_chart_set_range(chart_rain, LV_CHART_AXIS_PRIMARY_Y, 0, m);
     lv_obj_set_style_size(chart_rain, 0, LV_PART_INDICATOR);
-    lv_chart_series_t * ser = lv_chart_add_series(chart_rain, lv_palette_main(LV_PALETTE_BLUE), LV_CHART_AXIS_PRIMARY_Y);
-    lv_chart_set_point_count(chart_rain, 120);      //点数
+    lv_chart_series_t *ser = lv_chart_add_series(chart_rain, lv_palette_main(LV_PALETTE_BLUE), LV_CHART_AXIS_PRIMARY_Y);
+    lv_chart_set_point_count(chart_rain, 120); //点数
     lv_chart_set_ext_y_array(chart_rain, ser, (lv_coord_t *)weather.rain);
     lv_obj_set_style_opa(chart_rain, 0, 0);
     RELEASELV();

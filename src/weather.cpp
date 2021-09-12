@@ -71,11 +71,6 @@ void Weather::begin()
 
 int8_t Weather::refresh(String location)
 {
-    if (hal.conf.getString("weatherappkey") == "")
-    {
-        Serial.println("未配置APPKEY");
-        return -1;
-    }
     if (!hal.connectWiFi())
     {
         Serial.println("WiFi连接失败");
@@ -85,8 +80,8 @@ int8_t Weather::refresh(String location)
     hal.DoNotSleep = true;
     http.addHeader("Accept", "*/*");
     http.addHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36");
-    //http.begin("http://api.caiyunapp.com/v2.5/96Ly7wgKGq6FhllM/" + location + "/weather.jsonp?unit=metric:v2"); //HTTP
-    http.begin("http://api.caiyunapp.com/v2.5/96Ly7wgKGq6FhllM/116.0684%2C39.4978/weather.jsonp?unit=metric%3Av2"); //HTTP
+    http.begin("http://api.caiyunapp.com/v2.5/96Ly7wgKGq6FhllM/" + location + "/weather.jsonp?hourlysteps=120&unit=metric:v2"); //HTTP
+    //http.begin("http://api.caiyunapp.com/v2.5/96Ly7wgKGq6FhllM/116.0684%2C39.4978/weather.jsonp?unit=metric%3Av2"); //HTTP
     int httpCode = http.GET();
 
     if (httpCode == HTTP_CODE_OK)
@@ -139,7 +134,7 @@ int8_t Weather::refresh(String location)
         payload = stream.readStringUntil(']');
         payload = "{\"arr\":[" + payload + "]}";
         deserializeJson(doc, payload);
-        for (uint8_t i = 0; i < 48; ++i)
+        for (uint8_t i = 0; i < 120; ++i)
         {
             String timestr;
             timestr = doc["arr"][i]["datetime"].as<String>();
@@ -152,7 +147,7 @@ int8_t Weather::refresh(String location)
         payload = stream.readStringUntil(']');
         payload = "{\"arr\":[" + payload + "]}";
         deserializeJson(doc, payload);
-        for (uint8_t i = 0; i < 48; ++i)
+        for (uint8_t i = 0; i < 120; ++i)
         {
             hour24[i].winddirection = uint16_t(doc["arr"][i]["direction"].as<float>());
             hour24[i].windspeed = uint16_t(doc["arr"][i]["speed"].as<float>() * 10);
@@ -166,7 +161,7 @@ int8_t Weather::refresh(String location)
         payload = stream.readStringUntil(']');
         payload = "{\"arr\":[" + payload + "]}";
         deserializeJson(doc, payload);
-        for (uint8_t i = 0; i < 48; ++i)
+        for (uint8_t i = 0; i < 120; ++i)
         {
             String s = doc["arr"][i]["value"].as<String>();
             hour24[i].weathernum = codeToNum(s.c_str());
