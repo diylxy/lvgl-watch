@@ -45,8 +45,8 @@ static void wf_weather_loop()
         switch (currentPage)
         {
         case 0:
-            lv_obj_set_pos(lblheader, -40, -70);
-            lv_obj_set_pos(lbltemperature, 40, -70);
+            lv_obj_move_anim(lblheader, -40, -70);
+            lv_obj_move_anim(lbltemperature, 40, -70);
             lv_obj_fade_out(weather_image, 300, 0);
             lv_obj_set_pos(lbldesc2, 30, 140);
             lv_obj_fade_in(lbldesc1, 300, 0);
@@ -54,15 +54,15 @@ static void wf_weather_loop()
             break;
         case 1:
             lv_obj_fade_out(lbldesc1, 300, 0);
-            lv_obj_set_pos(lbldesc2, 30, 60);
-            lv_obj_fade_in(chart_rain, 300, 0);
+            lv_obj_move_anim(lbldesc2, 30, 60);
+            lv_obj_pop_up(chart_rain);
             break;
         case 2:
             lv_obj_fade_out(lbldesc2, 300, 0);
             lv_obj_fade_out(chart_rain, 300, 0);
             lv_obj_fade_in(weather_image, 300, 0);
-            lv_obj_set_pos(lblheader, 0, -70);
-            lv_obj_set_pos(lbltemperature, 0, 70);
+            lv_obj_move_anim(lblheader, 0, -70);
+            lv_obj_move_anim(lbltemperature, 0, 70);
             break;
         default:
             currentPage = 0;

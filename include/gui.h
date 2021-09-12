@@ -31,7 +31,7 @@ void lv_obj_fall_down(lv_obj_t *obj, uint16_t distance = 24,
  * @param obj lvgl对象指针
  * @param waitBeforeStart 动画开始前延时
  */                      
-void lv_obj_floating_add(lv_obj_t *obj, uint16_t waitBeforeStart);
+void lv_obj_floating_add(lv_obj_t *obj, uint16_t waitBeforeStart = 0);
 
 /**
  * @brief 移动到指定位置，渐慢动画
