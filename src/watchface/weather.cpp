@@ -1,6 +1,6 @@
 #include "A_config.h"
 
-#define WEATHER_PAGES 3
+#define WEATHER_PAGES 4
 static uint8_t currentPage = 0;
 static weatherInfo24H *currentWeather;
 ///////////////////////////////////////////////////////////
@@ -15,24 +15,9 @@ static lv_obj_t *lbldesc1;
 static lv_obj_t *lbldesc2;
 //page-2
 static lv_obj_t *chart_rain;
-
-static void wf_weather_page_0_load()
-{
-    REQUESTLV();
-    lv_label_set_text(weather_image, weather_icons[currentWeather->weathernum]);
-    lv_label_set_text(lblheader, weather_names[currentWeather->weathernum]);
-    lv_label_set_text_fmt(lbltemperature, "%d℃", currentWeather->temperature / 10);
-    RELEASELV();
-}
-
-static void wf_weather_page_1_load()
-{
-    REQUESTLV();
-    lv_label_set_text(lbldesc1, weather.desc1);
-    lv_label_set_text(lbldesc2, weather.desc2);
-    RELEASELV();
-}
-
+//page-3
+static lv_obj_t *lbl_hours[3][2];
+static lv_obj_t *lbl_tip_3hour;
 static void wf_weather_loop()
 {
     if (hal.btnUp.isPressedRaw())
@@ -58,11 +43,25 @@ static void wf_weather_loop()
             lv_obj_pop_up(chart_rain);
             break;
         case 2:
-            lv_obj_fade_out(lbldesc2, 300, 0);
+            lv_obj_fall_down(lbldesc2);
             lv_obj_fade_out(chart_rain, 300, 0);
-            lv_obj_fade_in(weather_image, 300, 0);
+            for (uint8_t i = 0; i < 3; ++i)
+            {
+                lv_obj_pop_up(lbl_hours[i][0], 24, 300, i * 100);
+                lv_obj_pop_up(lbl_hours[i][1], 24, 300, i * 100 + 50);
+            }
+            lv_obj_fade_in(lbl_tip_3hour, 500, 0);
+            break;
+        case 3:
             lv_obj_move_anim(lblheader, 0, -70);
             lv_obj_move_anim(lbltemperature, 0, 70);
+            lv_obj_fade_in(weather_image, 300, 0);
+            for (uint8_t i = 0; i < 3; ++i)
+            {
+                lv_obj_fade_out(lbl_hours[i][0], 300, i * 100);
+                lv_obj_fade_out(lbl_hours[i][1], 300, i * 100 + 50);
+            }
+            lv_obj_fade_out(lbl_tip_3hour, 300, 0);
             break;
         default:
             currentPage = 0;
@@ -109,6 +108,9 @@ void wf_weather_load()
     lv_obj_align(weather_image, LV_ALIGN_CENTER, 0, 0);
     lv_obj_align(lblheader, LV_ALIGN_CENTER, 0, -70);
     lv_obj_align(lbltemperature, LV_ALIGN_CENTER, 0, 70);
+    lv_label_set_text(weather_image, weather_icons[currentWeather->weathernum]);
+    lv_label_set_text(lblheader, weather_names[currentWeather->weathernum]);
+    lv_label_set_text_fmt(lbltemperature, "%d℃", currentWeather->temperature / 10);
     ////Page-1
     lbldesc1 = lv_label_create(scr_weather);
     lbldesc2 = lv_label_create(scr_weather);
@@ -124,10 +126,12 @@ void wf_weather_load()
     lv_obj_set_style_opa(lbldesc2, 0, 0);
     lv_obj_set_pos(lbldesc1, 30, 80);
     lv_obj_set_pos(lbldesc2, 30, 140);
+    lv_label_set_text(lbldesc1, weather.desc1);
+    lv_label_set_text(lbldesc2, weather.desc2);
     //Page-2
     chart_rain = lv_chart_create(scr_weather);
     lv_obj_set_size(chart_rain, 140, 80);
-    lv_obj_set_pos(chart_rain, 50, 120);
+    lv_obj_set_pos(chart_rain, 50, 110);
     lv_chart_set_range(chart_rain, LV_CHART_AXIS_PRIMARY_Y, 0, 2600);
     int16_t m = 0;
     for (int8_t i = 0; i < 120; ++i)
@@ -144,8 +148,51 @@ void wf_weather_load()
     lv_chart_set_point_count(chart_rain, 120); //点数
     lv_chart_set_ext_y_array(chart_rain, ser, (lv_coord_t *)weather.rain);
     lv_obj_set_style_opa(chart_rain, 0, 0);
+    ////Page-3
+    uint8_t date = hal.rtc.getDate();
+    uint8_t month = hal.rtc.getMonth();
+    uint8_t hour = hal.rtc.getHour();
+    for (uint8_t i = 0; i < 3; ++i)
+    {
+        weatherInfo24H *weather1;
+        ++hour;
+        if (hour == 24)
+        {
+            hour = 0;
+            ++date;
+            if (date > 30)
+            {
+                date = 1;
+                ++month; //只要不在每月最后一天21:00后查看天气就不会有问题，还能减少不少判断步骤
+            }
+        }
+        weather1 = weather.getWeather(month, date, hour);
+        lbl_hours[i][0] = lv_label_create(scr_weather);
+        lbl_hours[i][1] = lv_label_create(scr_weather);
+        lv_obj_set_style_text_font(lbl_hours[i][0], &font_weather_32, 0);
+        lv_obj_set_style_text_color(lbl_hours[i][0], lv_color_white(), 0);
+        lv_obj_set_style_text_font(lbl_hours[i][1], &font_weather_num_24, 0);
+        lv_obj_set_style_text_color(lbl_hours[i][1], lv_color_white(), 0);
+        lv_obj_set_pos(lbl_hours[i][0], 20 + 70 * i, 90);
+        lv_obj_set_pos(lbl_hours[i][1], 30 + 70 * i, 150);
+        lv_obj_set_style_opa(lbl_hours[i][0], 0, 0);
+        lv_obj_set_style_opa(lbl_hours[i][1], 0, 0);
+        if (weather1 == NULL)
+        {
+            lv_label_set_text(lbl_hours[i][0], "");
+            lv_label_set_text(lbl_hours[i][1], "--");
+            continue;
+        }
+        lv_label_set_text(lbl_hours[i][0], weather_names[weather1->weathernum]);
+        lv_label_set_text_fmt(lbl_hours[i][1], "%d℃", weather1->temperature / 10);
+    }
+    lbl_tip_3hour = lv_label_create(scr_weather);
+    lv_obj_set_style_text_font(lbl_tip_3hour, &lv_font_chinese_16, 0);
+    lv_label_set_text(lbl_tip_3hour, "未来三小时");
+    lv_obj_set_style_text_color(lbl_tip_3hour, lv_color_white(), 0);
+    lv_obj_align(lbl_tip_3hour, LV_ALIGN_CENTER, 0, 60);
+    lv_obj_set_style_opa(lbl_tip_3hour, 0, 0);
+    lv_obj_floating_add(lbl_tip_3hour, 0);
     RELEASELV();
-    wf_weather_page_0_load();
-    wf_weather_page_1_load();
     hal.fLoop = wf_weather_loop;
 }
