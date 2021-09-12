@@ -119,11 +119,11 @@ void lv_obj_floating_add(lv_obj_t *obj, uint16_t waitBeforeStart)
     lv_anim_start(&a);
 }
 
-void lv_obj_move_anim(lv_obj_t *obj, uint16_t x, uint16_t y,
+void lv_obj_move_anim(lv_obj_t *obj, int16_t x, int16_t y,
                       uint16_t time, uint16_t waitBeforeStart)
 {
     lv_anim_t a;
-    uint16_t p;
+    int16_t p;
     lv_anim_init(&a);
     lv_anim_set_var(&a, obj);
     p = lv_obj_get_style_x(obj, 0);

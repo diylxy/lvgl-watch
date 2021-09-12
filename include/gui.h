@@ -41,7 +41,7 @@ void lv_obj_floating_add(lv_obj_t *obj, uint16_t waitBeforeStart);
  * @param time 动画持续时长
  * @param delay 动画开始前延时
  */
-void lv_obj_move_anim(lv_obj_t *obj, uint16_t x, uint16_t y,
+void lv_obj_move_anim(lv_obj_t *obj, int16_t x, int16_t y,
                       uint16_t time = 500, uint16_t waitBeforeStart = 0);
 /**
  * @brief 创建并初始化菜单控件，清空菜单数组，但是不会立刻显示菜单。创建菜单第一步
