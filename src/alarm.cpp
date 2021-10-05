@@ -16,7 +16,6 @@ const char *class_names[] =
         "体育",
         "自习",
         "班会",
-        "信息",
         "",
 };
 const char *week_name[] =
