@@ -99,6 +99,7 @@ void setup()
 {
     bool hiddenFunctions = false;
     Serial.begin(115200);
+    ir.enableIROut(false);
     if (!SPIFFS.begin(true))
     {
         Serial.println("无法挂载SPIFFS，对于这个项目，绝对不可能执行到这里，但是写一下以防万一谁拿去二次开发了呢");

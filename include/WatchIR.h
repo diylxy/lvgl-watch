@@ -15,12 +15,12 @@ public:
         if(en)
         {
             pinMode(WATCH_IR_LED, OUTPUT);
-            digitalWrite(WATCH_IR_LED, 0);
+            digitalWrite(WATCH_IR_LED, 1);
         }
         else
         {
             pinMode(WATCH_IR_LED, INPUT);
-            digitalWrite(WATCH_IR_LED, 0);
+            digitalWrite(WATCH_IR_LED, 1);
         }
     }
     /**
