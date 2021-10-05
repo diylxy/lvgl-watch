@@ -151,7 +151,7 @@ uint16_t msgbox_time(const char *str, uint16_t value_pre = 0);
  * @param str 提示字符串
  * @param digits 数字位数，如100为3位，99为2位，099为3位
  * @param dotat 小数点位置，从右向左数，如123.45小数点位置为2，1234小数点位置为0
- * @param max 最大输入数，超过后显示会自动变为0
+ * @param max 最大输入数，超过后显示会自动变为最小数
  * @param min 最小输入数，低于此数显示会自动变为最大输入数
  * @param value_pre 预设值
  * @return 一个有符号整数，代表输入的值，定点数，如输入12.345，返回12345

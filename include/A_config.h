@@ -16,6 +16,8 @@
 
 //振动电机引脚定义
 #define VIBRATE_MOTOR 2
+//红外LED引脚定义
+#define WATCH_IR_LED 4
 
 #define DISPLAY_MAX_X 240
 #define DISPLAY_MAX_Y 240
@@ -57,4 +59,6 @@
 #include <WebConfig.h>
 #include "weather.h"
 #include "Morse.h"
+#include "WatchIR.h"
+#include "menu.h"
 #endif
