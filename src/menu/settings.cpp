@@ -88,7 +88,7 @@ void menu_maker_settings()
             }
             hal.DoNotSleep = true;
             hal.rtcOffsetSecond(tmp);
-            if (abs(tmp) > 2)
+            if (abs(tmp) > 3)
             {
                 full_screen_msgbox_del(msgbox_full);
             }

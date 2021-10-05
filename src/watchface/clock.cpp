@@ -212,7 +212,6 @@ static void wf_clock_loop()
     }
     if (hal.btnEnter.isPressedRaw())
     {
-        uint16_t tmp;
         lv_obj_t *msgbox_full;
         hal.canDeepSleep = false;
         vTaskDelay(100);
