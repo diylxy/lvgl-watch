@@ -45,6 +45,6 @@ bool alarm_save();
 bool alarm_load();
 extern const char *class_names[];
 extern const char *week_name[];
-#define CLASS_NAMES_COUNT 11
+#define CLASS_NAMES_COUNT 16
 extern alarm_t *current_alarm;
 #endif
