@@ -90,7 +90,14 @@ static void task_dock_update(void *param)
         {
             lv_label_set_text_fmt(lblBattery, "%d.%03d V", batVoltage / 1000, batVoltage % 1000);
         }
-        lv_label_set_text_fmt(lblTime, "%02d:%02d", hal.rtc.getHour(), hal.rtc.getMinute());
+        if(hal.rtcLock == false)
+        {
+            lv_label_set_text_fmt(lblTime, "%02d:%02d", hal.rtc.getHour(), hal.rtc.getMinute());
+        }
+        else
+        {
+            lv_label_set_text(lblTime, "--:--");
+        }
         vTaskDelay(3000 / portTICK_PERIOD_MS);
     }
 }

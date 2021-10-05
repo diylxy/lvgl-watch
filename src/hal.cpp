@@ -207,7 +207,7 @@ void Watch_HAL::deepSleep()
 
 void Watch_HAL::motor_update()
 {
-    if(strcmp(hal.conf.getValue("enmotor"), "0") == 0)
+    if (strcmp(hal.conf.getValue("enmotor"), "0") == 0)
     {
         motor_seq_tail = motor_seq_head;
         return;
@@ -406,4 +406,84 @@ bool Watch_HAL::NTPSync()
     if (tm_now == 0)
         return false;
     return true;
+}
+void Watch_HAL::rtcOffsetSecond(int8_t seconds)
+{
+    hal.rtcLock = true; //锁住rtc，防止叠加层访问造成微调失败
+    uint8_t waituntil;
+    uint8_t i;
+    if (seconds < -15 || seconds > 15 || seconds == 0)
+    {
+        hal.rtcLock = false;
+        return;
+    }
+    waituntil = hal.rtc.getSecond();
+    do
+    {
+        vTaskDelay(5);
+        i = hal.rtc.getSecond();
+    } while (i == waituntil);
+    if (seconds < 0)
+    {
+        //向前偏移秒数
+        waituntil = abs(seconds) + 2; //+2防止出问题
+        do
+        {
+            vTaskDelay(10);
+            i = hal.rtc.getSecond();
+        } while (i <= waituntil);
+        hal.rtc.setSecond(i + seconds); //注意second<0，所以是向前偏移
+    }
+    else
+    {
+        //向后偏移秒数
+        waituntil = 60 - 2 - seconds; //-2防止出问题
+        do
+        {
+            vTaskDelay(10);
+            i = hal.rtc.getSecond();
+        } while (i >= waituntil || i == 0);
+        hal.rtc.setSecond(i + seconds);
+    }
+    hal.rtcLock = false;
+}
+
+void Watch_HAL::rtcOffsetms(int16_t ms)
+{
+    uint8_t i;
+    uint8_t i1;
+    hal.rtcLock = true; //锁住rtc，防止叠加层访问造成微调失败
+    if (ms < -900 || ms > 900 || ms == 0)
+    {
+        hal.rtcLock = false;
+        return;
+    }
+    if (hal.rtc.getSecond() >= 57)
+        delay(3000);
+    i1 = hal.rtc.getSecond();
+    ms = -ms;
+    if (ms > 0)
+    {
+        //调慢，即传入参数ms<0
+        do
+        {
+            vTaskDelay(5);
+            i = hal.rtc.getSecond();
+        } while (i == i1);
+        delay(ms);
+        hal.rtc.setSecond(i);
+    }
+    else
+    {
+        //调快，即传入参数ms>0
+        ms += 1000;
+        do
+        {
+            vTaskDelay(5);
+            i = hal.rtc.getSecond();
+        } while (i == i1);
+        delay(ms);
+        hal.rtc.setSecond(i + 1);
+    }
+    hal.rtcLock = false;
 }

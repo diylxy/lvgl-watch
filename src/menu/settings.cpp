@@ -46,7 +46,9 @@ void menu_maker_settings()
         //时间设置
         menu_create();
         menu_add(LV_SYMBOL_WIFI " 同步网络时间");
-        menu_add(LV_SYMBOL_EDIT " 时钟微调");
+        menu_add(LV_SYMBOL_SETTINGS " 秒针微调");
+        menu_add(LV_SYMBOL_EDIT " 毫秒级微调");
+        menu_add(LV_SYMBOL_EDIT " RTC频率微调");
         switch (menu_show())
         {
         case 1:
@@ -75,8 +77,35 @@ void menu_maker_settings()
             hal.DoNotSleep = false;
             break;
         case 2:
-            //时钟微调
-            full_screen_msgbox(BIG_SYMBOL_INFO, "RTC频率偏移",
+            //秒针微调，应对学校rtc几天慢一秒的问题
+            tmp = msgbox_number("偏移秒数", 2, 0, 15, -15, 0);
+            if (abs(tmp) > 3)
+            {
+                msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC,
+                                                        "秒钟微调",
+                                                        "正在等待RTC芯片准备好",
+                                                        FULL_SCREEN_BG_SYNC);
+            }
+            hal.DoNotSleep = true;
+            hal.rtcOffsetSecond(tmp);
+            if (abs(tmp) > 2)
+            {
+                full_screen_msgbox_del(msgbox_full);
+            }
+            full_screen_msgbox(BIG_SYMBOL_CHECK, "秒针微调", "调节成功", FULL_SCREEN_BG_CHECK, 2000);
+            hal.DoNotSleep = false;
+            break;
+        case 3:
+            //毫秒级微调，应对秒钟微调也调不准的问题
+            tmp = msgbox_number("偏移毫秒数", 3, 0, 900, -900, 0);
+            hal.DoNotSleep = true;
+            hal.rtcOffsetms(tmp);
+            full_screen_msgbox(BIG_SYMBOL_CHECK, "毫秒级微调", "调节成功", FULL_SCREEN_BG_CHECK, 2000);
+            hal.DoNotSleep = false;
+            break;
+        case 4:
+            //RTC频率微调
+            full_screen_msgbox(BIG_SYMBOL_INFO, "RTC频率微调",
                                "提示：正值减小振荡器频率，负值增大振荡器频率",
                                FULL_SCREEN_BG_INFO);
             tmp = hal.rtc.readOffset();
