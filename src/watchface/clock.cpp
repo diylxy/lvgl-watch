@@ -1,4 +1,6 @@
 #include "A_config.h"
+#include "sunset.h"
+SunSet sun;
 
 static lv_obj_t *scr_clock;
 static lv_obj_t *bg;
@@ -270,6 +272,10 @@ static void wf_clock_loop()
             case 6:
                 //DEBUG专用
                 {
+                    DateTime dt(hal.rtc.getYear(),hal.rtc.getMonth(), hal.rtc.getDate(), hal.rtc.getHour(), hal.rtc.getMinute(), hal.rtc.getSecond());
+                    uint32_t tm = dt.unixtime() - 946684800;
+                    int moon = sun.moonPhase(tm);
+                    msgbox("提示", (String("当前月相(1-30)[ BETA ] ") + String(moon+1)).c_str());
                     break;
                 }
             default:
