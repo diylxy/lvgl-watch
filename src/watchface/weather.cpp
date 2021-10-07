@@ -132,7 +132,7 @@ void wf_weather_load()
     chart_rain = lv_chart_create(scr_weather);
     lv_obj_set_size(chart_rain, 140, 80);
     lv_obj_set_pos(chart_rain, 50, 110);
-    lv_chart_set_range(chart_rain, LV_CHART_AXIS_PRIMARY_Y, 0, 2600);
+    lv_chart_set_range(chart_rain, LV_CHART_AXIS_PRIMARY_Y, 0, 400);
     int16_t m = 0;
     for (int8_t i = 0; i < 120; ++i)
     {
@@ -141,7 +141,7 @@ void wf_weather_load()
             m = weather.rain[i];
         }
     }
-    if (m > 2600)
+    if (m > 400)
         lv_chart_set_range(chart_rain, LV_CHART_AXIS_PRIMARY_Y, 0, m);
     lv_obj_set_style_size(chart_rain, 0, LV_PART_INDICATOR);
     lv_chart_series_t *ser = lv_chart_add_series(chart_rain, lv_palette_main(LV_PALETTE_BLUE), LV_CHART_AXIS_PRIMARY_Y);

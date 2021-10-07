@@ -80,7 +80,7 @@ int8_t Weather::refresh(String location)
     hal.DoNotSleep = true;
     http.addHeader("Accept", "*/*");
     http.addHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36");
-    http.begin("http://api.caiyunapp.com/v2.5/96Ly7wgKGq6FhllM/" + location + "/weather.jsonp?hourlysteps=120&unit=metric:v2"); //HTTP
+    http.begin("http://api.caiyunapp.com/v2.5/96Ly7wgKGq6FhllM/" + location + "/weather.jsonp?hourlysteps=120"); //HTTP
     //http.begin("http://api.caiyunapp.com/v2.5/96Ly7wgKGq6FhllM/116.0684%2C39.4978/weather.jsonp?unit=metric%3Av2"); //HTTP
     int httpCode = http.GET();
 
@@ -114,7 +114,7 @@ int8_t Weather::refresh(String location)
         deserializeJson(doc, payload);
         for (uint8_t i = 0; i < 120; ++i)
         {
-            rain[i] = doc["precipitation_2h"][i].as<float>() * 100;
+            rain[i] = doc["precipitation_2h"][i].as<float>() * 1000;
         }
         strcpy(desc2, doc["description"].as<String>().c_str());
         if (!stream.find("\"description\":\""))
