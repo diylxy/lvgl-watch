@@ -225,6 +225,7 @@ static void wf_clock_loop()
             menu_add(LV_SYMBOL_SETTINGS " 设置");
             menu_add(LV_SYMBOL_PLAY " Bilibili");
             menu_add(LV_SYMBOL_WIFI " 空调遥控");
+            menu_add("月相");
             menu_add(LV_SYMBOL_SETTINGS " Debug 专用选项");
             switch (menu_show())
             {
@@ -270,13 +271,34 @@ static void wf_clock_loop()
                 menu_maker_ac_control();
                 break;
             case 6:
-                //DEBUG专用
+                //月相
                 {
                     DateTime dt(hal.rtc.getYear(),hal.rtc.getMonth(), hal.rtc.getDate(), hal.rtc.getHour(), hal.rtc.getMinute(), hal.rtc.getSecond());
                     uint32_t tm = dt.unixtime() - 946684800;
                     int moon = sun.moonPhase(tm);
                     msgbox("提示", (String("当前月相(1-30)[ BETA ] ") + String(moon+1)).c_str());
                     break;
+                }
+            case 7:
+                //DEBUG专用
+                {
+                    NimBLEAddress addr;
+                    ble_init();
+                    addr = *ble_scan();
+                    msgbox_full = full_screen_msgbox_create(BIG_SYMBOL_SYNC, "BLE", "正在连接选择的BLE设备");
+                    bool success = ble_connect(addr);
+                    if(success)
+                    {
+                        String s = ble_read(GATEWAY_UUID_WEATHER, GATEWAY_UUID_WEATHER_HOURLY);
+                        full_screen_msgbox_del(msgbox_full);
+                        msgbox("读取到的数据为", s.c_str());
+                    }
+                    else
+                    {
+                        full_screen_msgbox_del(msgbox_full);
+                        msgbox("提示", "蓝牙连接失败");
+                    }
+                    ble_deinit();
                 }
             default:
                 break;

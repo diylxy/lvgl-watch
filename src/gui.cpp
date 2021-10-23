@@ -241,6 +241,7 @@ void menu_create(void)
 void menu_add(const char *str)
 {
     REQUESTLV();
+    if(obj_menu == NULL)return;
     lv_obj_t *btn = lv_btn_create(obj_menu);
     lv_obj_set_width(btn, lv_pct(100));
 
@@ -249,19 +250,74 @@ void menu_add(const char *str)
     lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_set_style_text_font(label, &lv_font_chinese_16, 0);
     lv_label_set_text_fmt(label, str);
-    lv_obj_scroll_to_view(lv_obj_get_child(obj_menu, 0), LV_ANIM_OFF);
+    lv_obj_fade_in(btn, 300, 0);
+    //lv_obj_scroll_to_view(lv_obj_get_child(obj_menu, 0), LV_ANIM_OFF);
     ++total;
     RELEASELV();
 }
 
-/**
- * @brief 显示菜单函数, 自动重新加载之前的screen
- * @return 选择的项目序号，如果为0则为[-返回-]
- */
-int16_t menu_show(int16_t startAt)
+
+int16_t menu_get_selected()
 {
-    uint32_t last_millis_up = millis();
-    uint32_t last_millis_down = millis();
+    return selected;
+}
+uint32_t last_millis_up;
+uint32_t last_millis_down;
+
+bool menu_handle()
+{
+    if (hal.btnUp.isPressedRaw())
+    {
+        if (millis() - last_millis_up > MENU_TIME_LONG)
+        {
+            last_millis_up = millis();
+            menu_slide(-1);
+        }
+    }
+    if (hal.btnDown.isPressedRaw())
+    {
+        if (millis() - last_millis_down > MENU_TIME_LONG)
+        {
+            last_millis_down = millis();
+            menu_slide(1);
+        }
+    }
+    if (hal.btnEnter.isPressedRaw())
+    {
+        REQUESTLV();
+        lv_obj_add_state(lv_obj_get_child(obj_menu, selected), LV_STATE_PRESSED);
+        RELEASELV();
+        while (hal.btnEnter.isPressedRaw())
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        REQUESTLV();
+        lv_anim_t a;
+        lv_anim_init(&a);
+        lv_anim_set_var(&a, scr_menu);
+        lv_anim_set_values(&a, LV_OPA_COVER, LV_OPA_TRANSP);
+        lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)opa_set);
+        lv_anim_set_time(&a, 200);
+        lv_anim_set_ready_cb(&a, anim_ready_cb);
+        lv_anim_start(&a);
+        anim_ready_req = true;
+        RELEASELV();
+        while (anim_ready_req)
+            vTaskDelay(40 / portTICK_PERIOD_MS);
+        REQUESTLV();
+        if (curr_scr != NULL)
+        {
+            lv_scr_load(curr_scr);
+        }
+        lv_obj_del(scr_menu);
+        RELEASELV();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        return true;
+    }
+    vTaskDelay(30 / portTICK_PERIOD_MS);
+    return false;
+}
+
+void menu_display(int16_t startAt)
+{
     selected = startAt;
     REQUESTLV();
     curr_scr = lv_scr_act();
@@ -279,65 +335,25 @@ int16_t menu_show(int16_t startAt)
     */
     lv_obj_scroll_to_view(lv_obj_get_child(obj_menu, selected), LV_ANIM_ON);
     RELEASELV();
+    last_millis_up = millis();
+    last_millis_down = millis();
     while (hal.btnEnter.isPressedRaw())
         vTaskDelay(10);
+}
+
+int16_t menu_show(int16_t startAt)
+{
+    menu_display(startAt);
     while (1)
     {
-        if (hal.btnUp.isPressedRaw())
+        if(menu_handle())
         {
-            if (millis() - last_millis_up > MENU_TIME_LONG)
-            {
-                last_millis_up = millis();
-                menu_slide(-1);
-            }
-        }
-        if (hal.btnDown.isPressedRaw())
-        {
-            if (millis() - last_millis_down > MENU_TIME_LONG)
-            {
-                last_millis_down = millis();
-                menu_slide(1);
-            }
-        }
-        if (hal.btnEnter.isPressedRaw())
-        {
-            REQUESTLV();
-            lv_obj_add_state(lv_obj_get_child(obj_menu, selected), LV_STATE_PRESSED);
-            RELEASELV();
-            while (hal.btnEnter.isPressedRaw())
-                vTaskDelay(100 / portTICK_PERIOD_MS);
-            REQUESTLV();
-            lv_anim_t a;
-            lv_anim_init(&a);
-            lv_anim_set_var(&a, scr_menu);
-            lv_anim_set_values(&a, LV_OPA_COVER, LV_OPA_TRANSP);
-            lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)opa_set);
-            lv_anim_set_time(&a, 200);
-            lv_anim_set_ready_cb(&a, anim_ready_cb);
-            lv_anim_start(&a);
-            anim_ready_req = true;
-            RELEASELV();
-            while (anim_ready_req)
-                vTaskDelay(40 / portTICK_PERIOD_MS);
-            REQUESTLV();
-            if (curr_scr != NULL)
-            {
-                lv_scr_load(curr_scr);
-            }
-            lv_obj_del(scr_menu);
-            RELEASELV();
-            vTaskDelay(10 / portTICK_PERIOD_MS);
             break;
         }
-        vTaskDelay(30 / portTICK_PERIOD_MS);
     }
     return selected;
 }
 
-/**
- * @brief 菜单滑动函数
- * @param direction 方向，上划正下划负
- */
 void menu_slide(int8_t direction)
 {
     REQUESTLV();
@@ -358,11 +374,6 @@ void menu_slide(int8_t direction)
 
 /////////////////MSGBOX////////////////
 
-/**
- * 显示一个信息提示
- * @param prompt 标题
- * @param msg 内容
- */
 void msgbox(const char *prompt, const char *msg, uint32_t auto_back)
 {
     uint32_t last_millis;

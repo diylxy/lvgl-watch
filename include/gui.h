@@ -55,6 +55,30 @@ void menu_create(void);
 void menu_add(const char *str);
 
 /**
+ * @brief 获取选择的菜单项
+ * @return 选择的项目序号，如果为0则为[-返回-]
+ */
+int16_t menu_get_selected();
+
+/**
+ * @brief 处理菜单输入。清保证在调用此函数之前已调用menu_display()
+ */
+bool menu_handle();
+
+/**
+ * @brief 显示菜单函数, 只是显示，方便中途异步追加菜单项 需要一个循环来处理输入：
+    while (1)
+    {
+        if(menu_handle())
+        {
+            break;
+        }
+    }    。然后用menu_get_selected()获取选择的项目
+ * @param startAt 可选参数，从哪一项开始，默认为0，即“返回”
+ */
+void menu_display(int16_t startAt = 0);
+
+/**
  * @brief 显示菜单函数。显示菜单，并等待用户选择
  * @param startAt 可选参数，从哪一项开始，默认为0，即“返回”
  * @return 用户选择的菜单项，如果为0则为“返回”

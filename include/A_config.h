@@ -61,4 +61,5 @@
 #include "Morse.h"
 #include "WatchIR.h"
 #include "menu.h"
+#include "WatchBLE.h"
 #endif
