@@ -1,4 +1,5 @@
 # lvgl-watch  
+### 暂停开发
 Open-Smartwatch手表第三方固件、源代码，基于LVGL8.0  
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/1452206376/lvgl-watch)  
 需要在GPIO2上接一个振动电机  
